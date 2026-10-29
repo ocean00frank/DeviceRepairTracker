@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Device Repair Tracker</title>
+    <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">Repair shop dashboard</p>
+                <h1>Device Repair Tracker</h1>
+            </div>
+            <div class="status-pill" id="healthStatus">Checking server...</div>
+        </header>
+
+        <main class="layout">
+            <section class="cards" id="dashboardCards">
+                <article class="card summary-card">
+                    <span class="label">Total jobs</span>
+                    <strong id="totalJobs">0</strong>
+                </article>
+                <article class="card summary-card accent">
+                    <span class="label">In progress</span>
+                    <strong id="jobsInProgress">0</strong>
+                </article>
+                <article class="card summary-card success">
+                    <span class="label">Ready for collection</span>
+                    <strong id="jobsReadyForCollection">0</strong>
+                </article>
+            </section>
+
+            <section class="panel-grid">
+                <article class="panel">
+                    <h2>Register customer</h2>
+                    <form id="customerForm" class="stack-form">
+                        <label>
+                            Full name
+                            <input type="text" name="fullName" required />
+                        </label>
+                        <label>
+                            Phone number
+                            <input type="text" name="phoneNumber" required />
+                        </label>
+                        <button type="submit">Save customer</button>
+                    </form>
+                </article>
+
+                <article class="panel">
+                    <h2>Register device</h2>
+                    <form id="deviceForm" class="stack-form">
+                        <label>
+                            Customer
+                            <select id="deviceCustomerSelect" name="customerId" required></select>
+                        </label>
+                        <label>
+                            Device type
+                            <input type="text" name="deviceType" placeholder="Phone, Laptop..." required />
+                        </label>
+                        <label>
+                            Brand
+                            <input type="text" name="brand" required />
+                        </label>
+                        <label>
+                            Model
+                            <input type="text" name="model" required />
+                        </label>
+                        <button type="submit">Save device</button>
+                    </form>
+                </article>
+            </section>
+
+            <section class="panel">
+                <h2>Create repair job</h2>
+                <form id="jobForm" class="job-form">
+                    <label>
+                        Customer
+                        <select id="jobCustomerSelect" name="customerId" required></select>
+                    </label>
+                    <label>
+                        Device
+                        <select id="jobDeviceSelect" name="deviceId" required></select>
+                    </label>
+                    <label class="wide">
+                        Reported fault
+                        <textarea name="reportedFault" rows="3" required></textarea>
+                    </label>
+                    <label class="wide">
+                        Repair notes
+                        <textarea name="repairNotes" rows="2"></textarea>
+                    </label>
+                    <button type="submit">Create repair job</button>
+                </form>
+            </section>
+
+            <section class="panel list-panel">
+                <div class="section-header">
+                    <h2>Repair jobs</h2>
+                    <input id="searchInput" type="search" placeholder="Search by customer, brand, fault..." aria-label="Search repair jobs" />
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Customer</th>
+                                <th>Contact</th>
+                                <th>Device</th>
+                                <th>Fault</th>
+                                <th>Status</th>
+                                <th>Date received</th>
+                            </tr>
+                        </thead>
+                        <tbody id="jobsTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel detail-panel">
+                <div class="section-header">
+                    <h2>Job details</h2>
+                </div>
+                <div id="jobDetailEmpty" class="empty-state">Select a repair job to view details.</div>
+                <div id="jobDetailContent" class="hidden">
+                    <div class="detail-meta">
+                        <div>
+                            <span class="label">Current status</span>
+                            <strong id="detailStatus">-</strong>
+                        </div>
+                        <div>
+                            <span class="label">Fault</span>
+                            <strong id="detailFault">-</strong>
+                        </div>
+                    </div>
+
+                    <form id="statusForm" class="status-form">
+                        <label>
+                            Update status
+                            <select id="statusSelect" name="status"></select>
+                        </label>
+                        <label>
+                            Note
+                            <input type="text" id="statusNote" placeholder="Optional update note" />
+                        </label>
+                        <button type="submit">Save status</button>
+                    </form>
+
+                    <div>
+                        <h3>Status history</h3>
+                        <ul id="historyList" class="history-list"></ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>
