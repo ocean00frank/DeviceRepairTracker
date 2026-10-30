@@ -15,7 +15,6 @@ class RepairJobTest {
     void allowsValidStatusProgression() throws InvalidRepairStatusException {
         RepairJob job = new RepairJob(1, 10, 20, "Screen cracked", "Customer reported a cracked screen");
 
-        job.updateStatus(RepairStatus.IN_PROGRESS);
         assertEquals(RepairStatus.IN_PROGRESS, job.getStatus());
 
         job.updateStatus(RepairStatus.READY_FOR_COLLECTION);
@@ -34,7 +33,7 @@ class RepairJobTest {
                 () -> job.updateStatus(RepairStatus.COMPLETED)
         );
 
-        assertTrue(thrown.getMessage().contains("RECEIVED"));
+        assertTrue(thrown.getMessage().contains("IN_PROGRESS"));
     }
 
     @Test
@@ -53,7 +52,7 @@ class RepairJobTest {
         RepairJob job = new RepairJob(1, 10, 20, "Charging port", "Need port replacement");
         var summary = job.trackStatus();
 
-        assertTrue(summary.contains("RECEIVED"));
+        assertTrue(summary.contains("IN_PROGRESS"));
     }
 
     @Test

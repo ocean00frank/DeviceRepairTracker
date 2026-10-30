@@ -117,12 +117,6 @@ public class RepairManager {
         }
 
         job.setRepairOutcome(repairOutcome);
-        if (!"PENDING".equals(job.getRepairOutcome())
-                && job.getStatus() != RepairStatus.READY_FOR_COLLECTION
-                && job.getStatus() != RepairStatus.COMPLETED) {
-            throw new IllegalArgumentException("Set the repair result when the job is ready for collection");
-        }
-
         repairJobRepository.updateRepairOutcome(jobId, job.getRepairOutcome());
         return repairJobRepository.findById(jobId);
     }
@@ -151,7 +145,6 @@ public class RepairManager {
         }
 
         boolean validTransition = switch (previous) {
-            case RECEIVED -> newStatus == RepairStatus.IN_PROGRESS;
             case IN_PROGRESS -> newStatus == RepairStatus.READY_FOR_COLLECTION;
             case READY_FOR_COLLECTION -> newStatus == RepairStatus.COMPLETED;
             case COMPLETED -> false;
@@ -159,7 +152,7 @@ public class RepairManager {
 
         if (!validTransition) {
             throw new InvalidRepairStatusException(
-                    "Invalid status transition from " + previous + " to " + newStatus + ". Allowed transitions are: RECEIVED -> IN_PROGRESS, IN_PROGRESS -> READY_FOR_COLLECTION, READY_FOR_COLLECTION -> COMPLETED."
+                    "Invalid status transition from " + previous + " to " + newStatus + ". Allowed transitions are: IN_PROGRESS -> READY_FOR_COLLECTION, READY_FOR_COLLECTION -> COMPLETED."
             );
         }
 
@@ -183,9 +176,7 @@ public class RepairManager {
 
     public List<String> getAllowedNextStatuses(RepairStatus status) {
         List<String> statuses = new ArrayList<>();
-        if (status == RepairStatus.RECEIVED) {
-            statuses.add(RepairStatus.IN_PROGRESS.name());
-        } else if (status == RepairStatus.IN_PROGRESS) {
+        if (status == RepairStatus.IN_PROGRESS) {
             statuses.add(RepairStatus.READY_FOR_COLLECTION.name());
         } else if (status == RepairStatus.READY_FOR_COLLECTION) {
             statuses.add(RepairStatus.COMPLETED.name());

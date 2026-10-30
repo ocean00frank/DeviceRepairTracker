@@ -135,7 +135,7 @@ function renderJobs(jobs) {
                 <td>${customer.phoneNumber}</td>
                 <td>${device.brand} ${device.model}</td>
                 <td>${job.reportedFault}</td>
-                <td><span class="badge ${statusClass}">${job.status}</span></td>
+                <td><span class="badge ${statusClass}">${formatRepairStatus(job.status)}</span></td>
                 <td>${job.repairOutcome.replace(/_/g, ' ')}</td>
                 <td>${formatAmount(job.repairCost)}</td>
                 <td>${formatDate(job.createdAt)}</td>
@@ -173,12 +173,6 @@ async function renderJobDetail(jobId) {
         document.getElementById('detailFault').textContent = job.reportedFault;
         document.getElementById('detailOutcome').textContent = job.repairOutcome.replace(/_/g, ' ');
         outcomeSelect.value = job.repairOutcome;
-        const outcomeCanBeFinalized = ['READY_FOR_COLLECTION', 'COMPLETED'].includes(job.status);
-        outcomeSelect.disabled = !outcomeCanBeFinalized;
-        document.getElementById('saveOutcomeButton').disabled = !outcomeCanBeFinalized;
-        document.getElementById('outcomeHelp').textContent = outcomeCanBeFinalized
-            ? 'Confirm whether the device was fixed.'
-            : 'Available when ready for collection.';
         document.getElementById('repairCostDisplay').textContent = formatAmount(finance.repairCost);
         document.getElementById('totalPaidDisplay').textContent = formatAmount(finance.totalPaid);
         document.getElementById('balanceDisplay').textContent = formatAmount(finance.balance);
@@ -189,7 +183,6 @@ async function renderJobDetail(jobId) {
             : '<li>No payments recorded yet.</li>';
 
         const statusLabels = {
-            IN_PROGRESS: 'Still in progress',
             READY_FOR_COLLECTION: 'Ready for collection',
             COMPLETED: 'Completed'
         };
@@ -396,6 +389,14 @@ function formatDate(value) {
 
 function formatAmount(value) {
     return value == null ? 'Not set' : Number(value).toFixed(2);
+}
+
+function formatRepairStatus(status) {
+    return {
+        IN_PROGRESS: 'In progress',
+        READY_FOR_COLLECTION: 'Ready for collection',
+        COMPLETED: 'Completed'
+    }[status] || status;
 }
 
 async function boot() {

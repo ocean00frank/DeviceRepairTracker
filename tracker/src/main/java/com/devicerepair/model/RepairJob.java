@@ -24,8 +24,8 @@ public class RepairJob implements Trackable {
     private final List<String> statusHistory = new ArrayList<>();
 
     public RepairJob() {
-        // Every new job starts as received, and its creation time is its first update time.
-        this.status = RepairStatus.RECEIVED;
+        // New jobs immediately enter the repair queue.
+        this.status = RepairStatus.IN_PROGRESS;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = this.createdAt;
         this.statusHistory.add(this.status.name());
@@ -172,7 +172,6 @@ public class RepairJob implements Trackable {
 
         // Repairs must move forward one step at a time; completed jobs cannot move further.
         boolean validTransition = switch (this.status) {
-            case RECEIVED -> nextStatus == RepairStatus.IN_PROGRESS;
             case IN_PROGRESS -> nextStatus == RepairStatus.READY_FOR_COLLECTION;
             case READY_FOR_COLLECTION -> nextStatus == RepairStatus.COMPLETED;
             case COMPLETED -> false;
@@ -180,7 +179,7 @@ public class RepairJob implements Trackable {
 
         if (!validTransition) {
             throw new InvalidRepairStatusException(
-                    "Invalid status transition from " + this.status + " to " + nextStatus + ". Allowed transitions are: RECEIVED -> IN_PROGRESS, IN_PROGRESS -> READY_FOR_COLLECTION, READY_FOR_COLLECTION -> COMPLETED."
+                    "Invalid status transition from " + this.status + " to " + nextStatus + ". Allowed transitions are: IN_PROGRESS -> READY_FOR_COLLECTION, READY_FOR_COLLECTION -> COMPLETED."
             );
         }
 

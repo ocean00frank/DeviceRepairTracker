@@ -1,7 +1,6 @@
 package com.devicerepair.model;
 
 public enum RepairStatus {
-    RECEIVED,
     IN_PROGRESS,
     READY_FOR_COLLECTION,
     COMPLETED;

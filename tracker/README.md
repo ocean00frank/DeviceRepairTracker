@@ -13,7 +13,7 @@ Small repair shops often track jobs using paper notes, WhatsApp messages, and ha
 - Create, view, search, and manage repair jobs.
 - Track the repair outcome as pending, fixed, or not fixed.
 - Set a repair cost, record payments, and see the remaining balance.
-- Track status across RECEIVED -> IN_PROGRESS -> READY_FOR_COLLECTION -> COMPLETED.
+- Track status across IN_PROGRESS -> READY_FOR_COLLECTION -> COMPLETED.
 - Persist customers, devices, repair jobs, and status history in PostgreSQL using JDBC and PreparedStatement.
 - Persist repair costs and payment records in PostgreSQL.
 - Reject invalid transitions with a custom checked exception.
@@ -271,7 +271,6 @@ The controller layer exposes JSON endpoints while the service and repository lay
 
 The allowed transitions are:
 
-- RECEIVED -> IN_PROGRESS
 - IN_PROGRESS -> READY_FOR_COLLECTION
 - READY_FOR_COLLECTION -> COMPLETED
 
@@ -283,7 +282,7 @@ A request to move to the same status is treated as a harmless no-op. Any other t
 2. Register a customer and device.
 3. Create a repair job.
 4. Set a repair cost and record a partial or full payment.
-5. Change status from RECEIVED to IN_PROGRESS to READY_FOR_COLLECTION to COMPLETED.
+5. Change status from IN_PROGRESS to READY_FOR_COLLECTION to COMPLETED.
 6. Show search, payment history, the outstanding balance, and repair history.
 7. Explain the custom exception and the OOP examples.
 
