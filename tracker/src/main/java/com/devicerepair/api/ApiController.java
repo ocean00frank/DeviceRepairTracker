@@ -6,6 +6,7 @@ import com.devicerepair.model.*;
 import com.devicerepair.service.RepairManager;
 import io.javalin.Javalin;
 
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
@@ -88,6 +89,15 @@ public class ApiController {
             }
         });
 
+        app.get("/api/repair-jobs/search", ctx -> {
+            String query = ctx.queryParam("q");
+            try {
+                ctx.json(manager.searchRepairJobs(query));
+            } catch (SQLException e) {
+                ctx.status(500).json(errorResponse("Database error", "Unable to search repair jobs"));
+            }
+        });
+
         app.get("/api/repair-jobs/{id}", ctx -> {
             try {
                 int id = Integer.parseInt(ctx.pathParam("id"));
@@ -96,12 +106,12 @@ public class ApiController {
                     ctx.status(404).json(errorResponse("Not found", "Repair job not found"));
                     return;
                 }
-                job.setStatus(job.getStatus());
-                List<RepairRecord> records = manager.getRepairHistory(id);
+                List<Map<String, Object>> records = manager.getRepairHistory(id);
                 Map<String, Object> response = new HashMap<>();
                 response.put("job", job);
                 response.put("records", records);
                 response.put("allowedNextStatuses", manager.getAllowedNextStatuses(job.getStatus()));
+                response.put("finance", manager.getFinanceSnapshot(id));
                 ctx.json(response);
             } catch (NumberFormatException e) {
                 ctx.status(400).json(errorResponse("Invalid ID", "Repair job ID must be a number"));
@@ -110,12 +120,73 @@ public class ApiController {
             }
         });
 
-        app.get("/api/repair-jobs/search", ctx -> {
-            String query = ctx.queryParam("q");
+        app.put("/api/repair-jobs/{id}/cost", ctx -> {
             try {
-                ctx.json(manager.searchRepairJobs(query));
+                int id = Integer.parseInt(ctx.pathParam("id"));
+                CostRequest request = ctx.bodyAsClass(CostRequest.class);
+                ctx.json(manager.setRepairCost(id, request.repairCost()));
+            } catch (NumberFormatException e) {
+                ctx.status(400).json(errorResponse("Invalid ID", "Repair job ID must be a number"));
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).json(errorResponse("Invalid repair cost", e.getMessage()));
             } catch (SQLException e) {
-                ctx.status(500).json(errorResponse("Database error", "Unable to search repair jobs"));
+                ctx.status(500).json(errorResponse("Database error", "Unable to verify repair job"));
+            }
+        });
+
+        app.put("/api/repair-jobs/{id}/outcome", ctx -> {
+            try {
+                int id = Integer.parseInt(ctx.pathParam("id"));
+                OutcomeRequest request = ctx.bodyAsClass(OutcomeRequest.class);
+                ctx.json(manager.updateRepairOutcome(id, request.repairOutcome()));
+            } catch (NumberFormatException e) {
+                ctx.status(400).json(errorResponse("Invalid ID", "Repair job ID must be a number"));
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).json(errorResponse("Invalid repair outcome", e.getMessage()));
+            } catch (SQLException e) {
+                ctx.status(500).json(errorResponse("Database error", "Unable to save repair outcome"));
+            }
+        });
+
+        app.put("/api/repair-jobs/{id}", ctx -> {
+            try {
+                int id = Integer.parseInt(ctx.pathParam("id"));
+                JobDetailsRequest request = ctx.bodyAsClass(JobDetailsRequest.class);
+                ctx.json(manager.updateRepairDetails(id, request.reportedFault(), request.repairNotes()));
+            } catch (NumberFormatException e) {
+                ctx.status(400).json(errorResponse("Invalid ID", "Repair job ID must be a number"));
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).json(errorResponse("Invalid repair details", e.getMessage()));
+            } catch (SQLException e) {
+                ctx.status(500).json(errorResponse("Database error", "Unable to update repair details"));
+            }
+        });
+
+        app.get("/api/repair-jobs/{id}/payments", ctx -> {
+            try {
+                int id = Integer.parseInt(ctx.pathParam("id"));
+                ctx.json(manager.getFinanceSnapshot(id));
+            } catch (NumberFormatException e) {
+                ctx.status(400).json(errorResponse("Invalid ID", "Repair job ID must be a number"));
+            } catch (IllegalArgumentException e) {
+                ctx.status(404).json(errorResponse("Not found", e.getMessage()));
+            } catch (SQLException e) {
+                ctx.status(500).json(errorResponse("Database error", "Unable to verify repair job"));
+            }
+        });
+
+        app.post("/api/repair-jobs/{id}/payments", ctx -> {
+            try {
+                int id = Integer.parseInt(ctx.pathParam("id"));
+                PaymentRequest request = ctx.bodyAsClass(PaymentRequest.class);
+                String paymentStatus = request.paymentStatus() == null ? "PAID" : request.paymentStatus();
+                ctx.status(201).json(manager.recordPayment(id, request.amount(), request.paymentMethod(), paymentStatus));
+            } catch (NumberFormatException e) {
+                ctx.status(400).json(errorResponse("Invalid ID", "Repair job ID must be a number"));
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).json(errorResponse("Invalid payment", e.getMessage()));
+            } catch (SQLException e) {
+                ctx.status(500).json(errorResponse("Database error", "Unable to verify repair job"));
             }
         });
 
@@ -156,7 +227,7 @@ public class ApiController {
         app.get("/api/trackable-demo", ctx -> {
             List<Trackable> trackables = new java.util.ArrayList<>();
             trackables.add(new RepairJob(1, 1, 1, "Screen cracked", "Needs screen replacement"));
-            trackables.add(new RepairRecord(1, 1, RepairStatus.RECEIVED, RepairStatus.IN_PROGRESS, "Started diagnosis"));
+            trackables.add(new Payment(1, 1, new BigDecimal("25.00"), "Cash", "PAID", java.time.LocalDateTime.now()));
             ctx.json(trackables.stream().map(Trackable::trackStatus).toList());
         });
     }
@@ -175,6 +246,18 @@ public class ApiController {
     }
 
     public record JobRequest(int customerId, int deviceId, String reportedFault, String repairNotes) {
+    }
+
+    public record CostRequest(BigDecimal repairCost) {
+    }
+
+    public record OutcomeRequest(String repairOutcome) {
+    }
+
+    public record JobDetailsRequest(String reportedFault, String repairNotes) {
+    }
+
+    public record PaymentRequest(BigDecimal amount, String paymentMethod, String paymentStatus) {
     }
 
     public record StatusRequest(String status, String notes) {

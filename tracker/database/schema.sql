@@ -25,6 +25,13 @@ CREATE TABLE IF NOT EXISTS repair_jobs (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE repair_jobs
+    ADD COLUMN IF NOT EXISTS repair_cost NUMERIC(12, 2);
+
+ALTER TABLE repair_jobs
+    ADD COLUMN IF NOT EXISTS repair_outcome VARCHAR(20) NOT NULL DEFAULT 'PENDING'
+    CHECK (repair_outcome IN ('PENDING', 'FIXED', 'NOT_FIXED'));
+
 CREATE TABLE IF NOT EXISTS repair_records (
     id SERIAL PRIMARY KEY,
     repair_job_id INT NOT NULL REFERENCES repair_jobs(id) ON DELETE CASCADE,
@@ -34,9 +41,19 @@ CREATE TABLE IF NOT EXISTS repair_records (
     recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS payments (
+    id SERIAL PRIMARY KEY,
+    repair_job_id INT NOT NULL REFERENCES repair_jobs(id) ON DELETE CASCADE,
+    amount NUMERIC(12, 2) NOT NULL CHECK (amount > 0),
+    payment_method VARCHAR(50) NOT NULL,
+    payment_status VARCHAR(20) NOT NULL DEFAULT 'PAID' CHECK (payment_status IN ('PENDING', 'PAID', 'FAILED')),
+    paid_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone_number);
 CREATE INDEX IF NOT EXISTS idx_devices_customer_id ON devices(customer_id);
 CREATE INDEX IF NOT EXISTS idx_repair_jobs_customer_id ON repair_jobs(customer_id);
 CREATE INDEX IF NOT EXISTS idx_repair_jobs_status ON repair_jobs(status);
 CREATE INDEX IF NOT EXISTS idx_repair_jobs_device_id ON repair_jobs(device_id);
 CREATE INDEX IF NOT EXISTS idx_repair_records_job_id ON repair_records(repair_job_id);
+CREATE INDEX IF NOT EXISTS idx_payments_repair_job_id ON payments(repair_job_id);

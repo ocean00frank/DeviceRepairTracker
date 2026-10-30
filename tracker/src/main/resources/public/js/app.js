@@ -20,6 +20,10 @@ const jobDetailEmpty = document.getElementById('jobDetailEmpty');
 const jobDetailContent = document.getElementById('jobDetailContent');
 const statusForm = document.getElementById('statusForm');
 const statusSelect = document.getElementById('statusSelect');
+const costForm = document.getElementById('costForm');
+const paymentForm = document.getElementById('paymentForm');
+const outcomeForm = document.getElementById('outcomeForm');
+const outcomeSelect = document.getElementById('outcomeSelect');
 
 async function fetchJson(url, options = {}) {
     const response = await fetch(url, {
@@ -116,7 +120,7 @@ async function loadJobs() {
 
 function renderJobs(jobs) {
     if (!jobs.length) {
-        tableBody.innerHTML = '<tr><td colspan="7"><div class="empty-state">No repair jobs found.</div></td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="9"><div class="empty-state">No repair jobs found.</div></td></tr>';
         return;
     }
 
@@ -125,13 +129,15 @@ function renderJobs(jobs) {
         const device = getDeviceById(job.deviceId) || { brand: 'Unknown', model: 'Unknown' };
         const statusClass = job.status.replace(/_/g, '-').toLowerCase();
         return `
-            <tr data-job-id="${job.id}">
+            <tr data-job-id="${job.id}" class="${job.id === state.selectedJobId ? 'selected' : ''}">
                 <td>#${job.id}</td>
                 <td>${customer.fullName}</td>
                 <td>${customer.phoneNumber}</td>
                 <td>${device.brand} ${device.model}</td>
                 <td>${job.reportedFault}</td>
                 <td><span class="badge ${statusClass}">${job.status}</span></td>
+                <td>${job.repairOutcome.replace(/_/g, ' ')}</td>
+                <td>${formatAmount(job.repairCost)}</td>
                 <td>${formatDate(job.createdAt)}</td>
             </tr>
         `;
@@ -141,6 +147,9 @@ function renderJobs(jobs) {
         row.addEventListener('click', () => {
             const jobId = Number(row.dataset.jobId);
             state.selectedJobId = jobId;
+            tableBody.querySelectorAll('tr[data-job-id]').forEach(jobRow => {
+                jobRow.classList.toggle('selected', Number(jobRow.dataset.jobId) === jobId);
+            });
             renderJobDetail(jobId);
         });
     });
@@ -154,16 +163,39 @@ function getDeviceById(deviceId) {
 async function renderJobDetail(jobId) {
     try {
         const result = await fetchJson(`/api/repair-jobs/${jobId}`);
-        const { job, records, allowedNextStatuses } = result;
+        const { job, records, allowedNextStatuses, finance } = result;
+        const device = getDeviceById(job.deviceId) || { deviceType: 'Device', brand: 'Unknown', model: 'Unknown' };
+        const customer = state.customers.find(item => item.id === job.customerId) || { fullName: 'Unknown customer' };
         jobDetailEmpty.classList.add('hidden');
         jobDetailContent.classList.remove('hidden');
 
-        document.getElementById('detailStatus').textContent = job.status;
+        document.getElementById('selectedJobContext').textContent = `Job #${job.id} · ${customer.fullName} · ${device.deviceType} ${device.brand} ${device.model}`;
         document.getElementById('detailFault').textContent = job.reportedFault;
+        document.getElementById('detailOutcome').textContent = job.repairOutcome.replace(/_/g, ' ');
+        outcomeSelect.value = job.repairOutcome;
+        const outcomeCanBeFinalized = ['READY_FOR_COLLECTION', 'COMPLETED'].includes(job.status);
+        outcomeSelect.disabled = !outcomeCanBeFinalized;
+        document.getElementById('saveOutcomeButton').disabled = !outcomeCanBeFinalized;
+        document.getElementById('outcomeHelp').textContent = outcomeCanBeFinalized
+            ? 'Confirm whether the device was fixed.'
+            : 'Available when ready for collection.';
+        document.getElementById('repairCostDisplay').textContent = formatAmount(finance.repairCost);
+        document.getElementById('totalPaidDisplay').textContent = formatAmount(finance.totalPaid);
+        document.getElementById('balanceDisplay').textContent = formatAmount(finance.balance);
 
-        statusSelect.innerHTML = allowedNextStatuses.length
-            ? allowedNextStatuses.map(status => `<option value="${status}">${status}</option>`).join('')
-            : '<option value="">No status update available</option>';
+        const paymentList = document.getElementById('paymentList');
+        paymentList.innerHTML = finance.payments.length
+            ? finance.payments.map(payment => `<li>${formatAmount(payment.amount)} via ${payment.paymentMethod} - ${payment.paymentStatus} (${formatDate(payment.paidAt)})</li>`).join('')
+            : '<li>No payments recorded yet.</li>';
+
+        const statusLabels = {
+            IN_PROGRESS: 'Still in progress',
+            READY_FOR_COLLECTION: 'Ready for collection',
+            COMPLETED: 'Completed'
+        };
+        statusSelect.innerHTML = '<option value="" selected disabled>Update status</option>' +
+            allowedNextStatuses.map(status => `<option value="${status}">${statusLabels[status]}</option>`).join('');
+        document.getElementById('saveStatusButton').disabled = allowedNextStatuses.length === 0;
 
         const historyList = document.getElementById('historyList');
         if (!records.length) {
@@ -249,17 +281,77 @@ async function handleStatusUpdate(event) {
 
     try {
         const status = statusSelect.value;
-        const note = document.getElementById('statusNote').value;
         await fetchJson(`/api/repair-jobs/${state.selectedJobId}/status`, {
             method: 'PUT',
             body: JSON.stringify({
-                status,
-                notes: note
+                status
             })
         });
-        document.getElementById('statusNote').value = '';
         await loadJobs();
         await loadDashboard();
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+async function submitCostForm(event) {
+    event.preventDefault();
+    if (!state.selectedJobId) {
+        alert('Select a job first');
+        return;
+    }
+
+    const formData = new FormData(costForm);
+    try {
+        await fetchJson(`/api/repair-jobs/${state.selectedJobId}/cost`, {
+            method: 'PUT',
+            body: JSON.stringify({ repairCost: Number(formData.get('repairCost')) })
+        });
+        await loadJobs();
+        await renderJobDetail(state.selectedJobId);
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+async function submitOutcomeForm(event) {
+    event.preventDefault();
+    if (!state.selectedJobId) {
+        alert('Select a job first');
+        return;
+    }
+
+    try {
+        await fetchJson(`/api/repair-jobs/${state.selectedJobId}/outcome`, {
+            method: 'PUT',
+            body: JSON.stringify({ repairOutcome: outcomeSelect.value })
+        });
+        await loadJobs();
+        await renderJobDetail(state.selectedJobId);
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+async function submitPaymentForm(event) {
+    event.preventDefault();
+    if (!state.selectedJobId) {
+        alert('Select a job first');
+        return;
+    }
+
+    const formData = new FormData(paymentForm);
+    try {
+        await fetchJson(`/api/repair-jobs/${state.selectedJobId}/payments`, {
+            method: 'POST',
+            body: JSON.stringify({
+                amount: Number(formData.get('amount')),
+                paymentMethod: formData.get('paymentMethod')
+            })
+        });
+        paymentForm.reset();
+        await loadJobs();
+        await renderJobDetail(state.selectedJobId);
     } catch (error) {
         alert(error.message);
     }
@@ -279,6 +371,9 @@ customerForm.addEventListener('submit', submitCustomerForm);
 deviceForm.addEventListener('submit', submitDeviceForm);
 jobForm.addEventListener('submit', submitJobForm);
 statusForm.addEventListener('submit', handleStatusUpdate);
+costForm.addEventListener('submit', submitCostForm);
+paymentForm.addEventListener('submit', submitPaymentForm);
+outcomeForm.addEventListener('submit', submitOutcomeForm);
 
 document.getElementById('jobCustomerSelect').addEventListener('change', async (event) => {
     const customerId = event.target.value;
@@ -297,6 +392,10 @@ document.getElementById('jobCustomerSelect').addEventListener('change', async (e
 function formatDate(value) {
     if (!value) return 'N/A';
     return new Date(value).toLocaleDateString();
+}
+
+function formatAmount(value) {
+    return value == null ? 'Not set' : Number(value).toFixed(2);
 }
 
 async function boot() {

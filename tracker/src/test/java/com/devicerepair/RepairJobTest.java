@@ -38,6 +38,17 @@ class RepairJobTest {
     }
 
     @Test
+    void tracksWhetherTheRepairWasFixed() {
+        RepairJob job = new RepairJob();
+
+        assertEquals("PENDING", job.getRepairOutcome());
+        job.setRepairOutcome("fixed");
+
+        assertEquals("FIXED", job.getRepairOutcome());
+        assertThrows(IllegalArgumentException.class, () -> job.setRepairOutcome("MAYBE"));
+    }
+
+    @Test
     void trackStatusProvidesRuntimeStatusSummary() {
         RepairJob job = new RepairJob(1, 10, 20, "Charging port", "Need port replacement");
         var summary = job.trackStatus();

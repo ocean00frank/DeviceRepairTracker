@@ -2,23 +2,29 @@ package com.devicerepair.model;
 
 import com.devicerepair.exception.InvalidRepairStatusException;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+// Holds repair details and controls valid progress from intake to completion.
 public class RepairJob implements Trackable {
     private int id;
     private int customerId;
     private int deviceId;
     private String reportedFault;
     private String repairNotes;
+    private BigDecimal repairCost;
     private RepairStatus status;
+    private String repairOutcome = "PENDING";
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    // Keep each status change so the job's progress can be reviewed later.
     private final List<String> statusHistory = new ArrayList<>();
 
     public RepairJob() {
+        // Every new job starts as received, and its creation time is its first update time.
         this.status = RepairStatus.RECEIVED;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = this.createdAt;
@@ -83,8 +89,37 @@ public class RepairJob implements Trackable {
         this.repairNotes = repairNotes == null ? "" : repairNotes.trim();
     }
 
+    public BigDecimal getRepairCost() {
+        return repairCost;
+    }
+
+    public void setRepairCost(BigDecimal repairCost) {
+        if (repairCost != null) {
+            try {
+                repairCost = repairCost.setScale(2, java.math.RoundingMode.UNNECESSARY);
+            } catch (ArithmeticException e) {
+                throw new IllegalArgumentException("Repair cost can have at most two decimal places", e);
+            }
+            if (repairCost.signum() <= 0) {
+                throw new IllegalArgumentException("Repair cost must be greater than zero");
+            }
+        }
+        this.repairCost = repairCost;
+    }
+
     public RepairStatus getStatus() {
         return status;
+    }
+
+    public String getRepairOutcome() {
+        return repairOutcome;
+    }
+
+    public void setRepairOutcome(String repairOutcome) {
+        if (repairOutcome == null || !repairOutcome.trim().matches("(?i)PENDING|FIXED|NOT_FIXED")) {
+            throw new IllegalArgumentException("Repair outcome must be PENDING, FIXED, or NOT_FIXED");
+        }
+        this.repairOutcome = repairOutcome.trim().toUpperCase(java.util.Locale.ROOT);
     }
 
     public void setStatus(RepairStatus status) {
@@ -121,9 +156,11 @@ public class RepairJob implements Trackable {
     }
 
     public List<String> getStatusHistory() {
+        // Return a read-only view so other classes cannot change the job's history directly.
         return Collections.unmodifiableList(statusHistory);
     }
 
+    // Validate the next status before changing the job or recording its history.
     public void updateStatus(RepairStatus nextStatus) throws InvalidRepairStatusException {
         if (nextStatus == null) {
             throw new IllegalArgumentException("Status is required");
@@ -133,6 +170,7 @@ public class RepairJob implements Trackable {
             return;
         }
 
+        // Repairs must move forward one step at a time; completed jobs cannot move further.
         boolean validTransition = switch (this.status) {
             case RECEIVED -> nextStatus == RepairStatus.IN_PROGRESS;
             case IN_PROGRESS -> nextStatus == RepairStatus.READY_FOR_COLLECTION;
@@ -146,6 +184,7 @@ public class RepairJob implements Trackable {
             );
         }
 
+        // Save the new status only after it passes the transition rules.
         this.status = nextStatus;
         this.updatedAt = LocalDateTime.now();
         this.statusHistory.add(nextStatus.name());

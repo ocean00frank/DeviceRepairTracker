@@ -116,6 +116,53 @@ h1, h2, h3, p {
     gap: 14px;
 }
 
+.status-form {
+    grid-template-columns: minmax(180px, 1fr) auto;
+    align-items: end;
+    margin-bottom: 16px;
+}
+
+.detail-context {
+    margin: -8px 0 0;
+    color: var(--muted);
+}
+
+.finance-section {
+    border-top: 1px solid var(--line);
+    margin-top: 20px;
+    padding-top: 16px;
+}
+
+.finance-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.finance-summary > div {
+    display: grid;
+    gap: 4px;
+}
+
+.finance-form {
+    display: grid;
+    grid-template-columns: minmax(160px, 1fr) minmax(160px, 1fr) auto;
+    align-items: end;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.finance-form:first-of-type {
+    grid-template-columns: minmax(160px, 1fr) auto;
+}
+
+.form-hint {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
 .job-form {
     grid-template-columns: repeat(2, minmax(200px, 1fr));
 }
@@ -195,6 +242,10 @@ tbody tr:hover {
     background: #f8fafc;
 }
 
+tbody tr.selected {
+    background: var(--primary-soft);
+}
+
 .badge {
     display: inline-block;
     padding: 6px 10px;
@@ -252,6 +303,12 @@ tbody tr:hover {
     .cards,
     .job-form,
     .detail-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .finance-summary,
+    .finance-form,
+    .finance-form:first-of-type {
         grid-template-columns: 1fr;
     }
 

@@ -4,6 +4,7 @@ import com.devicerepair.exception.InvalidRepairStatusException;
 import com.devicerepair.model.*;
 import com.devicerepair.repository.*;
 
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -11,11 +12,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+// Coordinates validation and repository calls for repair-shop operations.
 public class RepairManager {
     private final CustomerRepository customerRepository = new CustomerRepository();
     private final DeviceRepository deviceRepository = new DeviceRepository();
     private final RepairJobRepository repairJobRepository = new RepairJobRepository();
-    private final RepairRecordRepository repairRecordRepository = new RepairRecordRepository();
+    private final RepairHistoryRepository repairHistoryRepository = new RepairHistoryRepository();
+    private final PaymentRepository paymentRepository = new PaymentRepository();
 
     public Customer registerCustomer(String fullName, String phoneNumber) throws SQLException {
         Customer customer = new Customer();
@@ -83,6 +86,59 @@ public class RepairManager {
         return repairJobRepository.search(query.trim());
     }
 
+    public RepairJob setRepairCost(int jobId, BigDecimal repairCost) throws SQLException {
+        RepairJob job = repairJobRepository.findById(jobId);
+        if (job == null) {
+            throw new IllegalArgumentException("Repair job not found");
+        }
+        job.setRepairCost(paymentRepository.setRepairCost(jobId, repairCost));
+        return job;
+    }
+
+    public Payment recordPayment(int jobId, BigDecimal amount, String paymentMethod, String paymentStatus) throws SQLException {
+        if (repairJobRepository.findById(jobId) == null) {
+            throw new IllegalArgumentException("Repair job not found");
+        }
+        Payment payment = new Payment(0, jobId, amount, paymentMethod, paymentStatus, LocalDateTime.now());
+        return paymentRepository.save(payment);
+    }
+
+    public PaymentRepository.FinanceSnapshot getFinanceSnapshot(int jobId) throws SQLException {
+        if (repairJobRepository.findById(jobId) == null) {
+            throw new IllegalArgumentException("Repair job not found");
+        }
+        return paymentRepository.getFinanceSnapshot(jobId);
+    }
+
+    public RepairJob updateRepairOutcome(int jobId, String repairOutcome) throws SQLException {
+        RepairJob job = repairJobRepository.findById(jobId);
+        if (job == null) {
+            throw new IllegalArgumentException("Repair job not found");
+        }
+
+        job.setRepairOutcome(repairOutcome);
+        if (!"PENDING".equals(job.getRepairOutcome())
+                && job.getStatus() != RepairStatus.READY_FOR_COLLECTION
+                && job.getStatus() != RepairStatus.COMPLETED) {
+            throw new IllegalArgumentException("Set the repair result when the job is ready for collection");
+        }
+
+        repairJobRepository.updateRepairOutcome(jobId, job.getRepairOutcome());
+        return repairJobRepository.findById(jobId);
+    }
+
+    public RepairJob updateRepairDetails(int jobId, String reportedFault, String repairNotes) throws SQLException {
+        RepairJob job = repairJobRepository.findById(jobId);
+        if (job == null) {
+            throw new IllegalArgumentException("Repair job not found");
+        }
+
+        job.setReportedFault(reportedFault);
+        job.setRepairNotes(repairNotes);
+        repairJobRepository.updateRepairDetails(jobId, job.getReportedFault(), job.getRepairNotes());
+        return repairJobRepository.findById(jobId);
+    }
+
     public RepairJob updateRepairStatus(int jobId, RepairStatus newStatus, String notes) throws SQLException, InvalidRepairStatusException {
         RepairJob job = repairJobRepository.findById(jobId);
         if (job == null) {
@@ -108,12 +164,12 @@ public class RepairManager {
         }
 
         job.updateStatus(newStatus);
-        repairJobRepository.updateStatus(jobId, newStatus, notes);
+        repairJobRepository.updateStatus(jobId, previous, newStatus, notes);
         return job;
     }
 
-    public List<RepairRecord> getRepairHistory(int repairJobId) throws SQLException {
-        return repairRecordRepository.findByRepairJobId(repairJobId);
+    public List<Map<String, Object>> getRepairHistory(int repairJobId) throws SQLException {
+        return repairHistoryRepository.findByRepairJobId(repairJobId);
     }
 
     public Map<String, Object> getDashboardStats() throws SQLException {
@@ -144,4 +200,5 @@ public class RepairManager {
         }
         return list;
     }
+
 }

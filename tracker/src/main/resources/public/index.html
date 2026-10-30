@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Device Repair Tracker</title>
+    <title>RepairTrack: Device Repair Tracker</title>
     <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
@@ -11,7 +11,7 @@
         <header class="topbar">
             <div>
                 <p class="eyebrow">Repair shop dashboard</p>
-                <h1>Device Repair Tracker</h1>
+                <h1>RepairTrack: Device Repair Tracker</h1>
             </div>
             <div class="status-pill" id="healthStatus">Checking server...</div>
         </header>
@@ -110,6 +110,8 @@
                                 <th>Device</th>
                                 <th>Fault</th>
                                 <th>Status</th>
+                                <th>Result</th>
+                                <th>Cost</th>
                                 <th>Date received</th>
                             </tr>
                         </thead>
@@ -120,32 +122,74 @@
 
             <section class="panel detail-panel">
                 <div class="section-header">
-                    <h2>Job details</h2>
+                    <div>
+                        <h2>Selected repair</h2>
+                        <p id="selectedJobContext" class="detail-context">No repair selected</p>
+                    </div>
                 </div>
-                <div id="jobDetailEmpty" class="empty-state">Select a repair job to view details.</div>
+                <div id="jobDetailEmpty" class="empty-state">Select a repair job above to update progress or record a payment.</div>
                 <div id="jobDetailContent" class="hidden">
                     <div class="detail-meta">
-                        <div>
-                            <span class="label">Current status</span>
-                            <strong id="detailStatus">-</strong>
-                        </div>
                         <div>
                             <span class="label">Fault</span>
                             <strong id="detailFault">-</strong>
                         </div>
+                        <div>
+                            <span class="label">Repair result</span>
+                            <strong id="detailOutcome">PENDING</strong>
+                        </div>
                     </div>
 
                     <form id="statusForm" class="status-form">
-                        <label>
-                            Update status
-                            <select id="statusSelect" name="status"></select>
-                        </label>
-                        <label>
-                            Note
-                            <input type="text" id="statusNote" placeholder="Optional update note" />
-                        </label>
-                        <button type="submit">Save status</button>
+                        <select id="statusSelect" name="status" aria-label="Update status" required></select>
+                        <button id="saveStatusButton" type="submit">Save status</button>
                     </form>
+
+                    <form id="outcomeForm" class="status-form">
+                        <label>
+                            Was the device fixed?
+                            <select id="outcomeSelect" name="repairOutcome">
+                                <option value="PENDING">Still being checked</option>
+                                <option value="FIXED">Fixed</option>
+                                <option value="NOT_FIXED">Not fixed</option>
+                            </select>
+                        </label>
+                        <button id="saveOutcomeButton" type="submit">Save repair result</button>
+                        <p id="outcomeHelp" class="form-hint">Available when ready for collection.</p>
+                    </form>
+
+                    <section class="finance-section" aria-labelledby="financeHeading">
+                        <h3 id="financeHeading">Repair cost and payments</h3>
+                        <div class="finance-summary">
+                            <div><span class="label">Repair cost</span><strong id="repairCostDisplay">Not set</strong></div>
+                            <div><span class="label">Paid</span><strong id="totalPaidDisplay">0.00</strong></div>
+                            <div><span class="label">Balance</span><strong id="balanceDisplay">Not set</strong></div>
+                        </div>
+                        <form id="costForm" class="finance-form">
+                            <label>
+                                Set repair cost
+                                <input type="number" name="repairCost" min="0.01" step="0.01" required />
+                            </label>
+                            <button type="submit">Save cost</button>
+                        </form>
+                        <form id="paymentForm" class="finance-form">
+                            <label>
+                                Payment amount
+                                <input type="number" name="amount" min="0.01" step="0.01" required />
+                            </label>
+                            <label>
+                                Payment method
+                                <select name="paymentMethod" required>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Mobile money">Mobile money</option>
+                                    <option value="Card">Card</option>
+                                    <option value="Bank transfer">Bank transfer</option>
+                                </select>
+                            </label>
+                            <button type="submit">Record payment</button>
+                        </form>
+                        <ul id="paymentList" class="history-list"></ul>
+                    </section>
 
                     <div>
                         <h3>Status history</h3>

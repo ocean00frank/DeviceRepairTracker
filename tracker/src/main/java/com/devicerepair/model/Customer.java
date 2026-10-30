@@ -1,5 +1,6 @@
 package com.devicerepair.model;
 
+// Stores a customer's identity and contact details for repair records.
 public class Customer {
     private int id;
     private String fullName;

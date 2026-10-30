@@ -1,32 +1,36 @@
-# Device Repair Tracker
+# RepairTrack: Device Repair Tracker
 
-A small Java + Javalin application for managing device repair jobs in a local PostgreSQL database.
+A Java + Javalin application for managing repair customers, devices, jobs, costs, and payments.
 
 ## Problem and aim
 
-Small repair shops often track jobs using paper notes, WhatsApp messages, and handwritten receipts. That causes lost records, bad status tracking, and confusion over which devices are waiting to be collected. This project provides a lightweight system for registering customers, recording devices, creating repair jobs, updating statuses, and searching records.
+Small repair shops often track jobs using paper notes, WhatsApp messages, and handwritten receipts. That causes lost records, bad status tracking, and confusion over which devices are waiting to be collected or paid for. This project provides a lightweight system for registering customers, recording devices, creating repair jobs, updating statuses, tracking repair costs and payments, and searching records.
 
 ## Objectives
 
 - Register customers and their contact details.
 - Record devices with type, brand, and model.
 - Create, view, search, and manage repair jobs.
+- Track the repair outcome as pending, fixed, or not fixed.
+- Set a repair cost, record payments, and see the remaining balance.
 - Track status across RECEIVED -> IN_PROGRESS -> READY_FOR_COLLECTION -> COMPLETED.
-- Persist data in PostgreSQL using JDBC and PreparedStatement.
+- Persist customers, devices, repair jobs, and status history in PostgreSQL using JDBC and PreparedStatement.
+- Persist repair costs and payment records in PostgreSQL.
 - Reject invalid transitions with a custom checked exception.
 
 ## Technologies
 
-- Java 17
+- Java 27
 - Maven
 - Javalin 5
 - PostgreSQL JDBC driver
+- Jackson JSON libraries
 - Dotenv Java
 - HTML, CSS, and vanilla JavaScript
 
 ## Prerequisites
 
-- JDK 17 or later installed
+- JDK 27 installed
 - Maven installed
 - PostgreSQL server running locally
 - A database named DeviceRepair_db, or adjust the value in your local .env file if your installation uses a different database name
@@ -44,6 +48,8 @@ DB_PASSWORD=change_me
 ```
 
 The application reads environment variables from .env and uses them to connect to PostgreSQL. Do not commit real credentials. The .env file is ignored by Git.
+
+PostgreSQL stores customers, devices, repair jobs, status history, repair costs, and payment records. Startup applies additive `IF NOT EXISTS` schema changes and does not drop existing tables or records.
 
 If your PostgreSQL role does not have permission to create tables or modify data, grant at least:
 
@@ -143,7 +149,57 @@ Request body:
 Lists all repair jobs.
 
 ### GET /api/repair-jobs/{id}
-Gets a single repair job by ID.
+Gets a single repair job, status history, and payment summary by ID.
+
+### PUT /api/repair-jobs/{id}
+Updates the reported fault and repair notes for the selected repair job.
+
+Request body:
+
+```json
+{
+  "reportedFault": "Charging port not working",
+  "repairNotes": "Replace the charging port"
+}
+```
+
+### PUT /api/repair-jobs/{id}/outcome
+Saves whether the device was fixed. Final outcomes are available once the job is ready for collection.
+
+Request body:
+
+```json
+{
+  "repairOutcome": "FIXED"
+}
+```
+
+### PUT /api/repair-jobs/{id}/cost
+Sets or updates the repair cost. The cost cannot be set below the amount already paid.
+
+Request body:
+
+```json
+{
+  "repairCost": 120.00
+}
+```
+
+### GET /api/repair-jobs/{id}/payments
+Returns the repair cost, total paid, outstanding balance, and payment history.
+
+### POST /api/repair-jobs/{id}/payments
+Records a payment with amount, method, and status (`PENDING`, `PAID`, or `FAILED`). Set the repair cost first; paid and pending amounts cannot exceed it.
+
+Request body:
+
+```json
+{
+  "amount": 45.50,
+  "paymentMethod": "Mobile money",
+  "paymentStatus": "PAID"
+}
+```
 
 ### GET /api/repair-jobs/search?q=term
 Searches by job ID, customer name, phone number, brand, model, and reported fault.
@@ -168,10 +224,22 @@ Returns the status history for a repair job.
 - devices: stores one-to-many relationship with customers
 - repair_jobs: stores each repair request and current status
 - repair_records: stores historical status changes
+- payments: stores payment amount, method, status, and date linked to a repair job
+
+The `payments` table links each payment to its repair job. The existing `repair_records` table continues to store status history; the API maps those rows directly instead of requiring an additional `RepairRecord` model class.
 
 The schema uses primary keys, foreign keys, timestamps, and indexes.
 
 ## OOP concepts in the project
+
+The six main domain classes and their responsibilities are:
+
+- `Customer`: validates and stores customer name and phone number.
+- `Device`: stores a device and its owning customer.
+- `RepairJob`: stores the reported fault, repair notes, cost, and current status.
+- `Payment`: validates and stores each payment amount, date, method, and status.
+- `RepairManager`: coordinates repair operations and repository calls.
+- `InvalidRepairStatusException`: reports status changes that break the allowed progression.
 
 ### Encapsulation
 Model classes keep their fields private and expose validation through constructors and setters. Database access is kept out of the model layer.
@@ -180,14 +248,14 @@ Model classes keep their fields private and expose validation through constructo
 `InvalidRepairStatusException` extends `Exception` and carries the error message for invalid status transitions.
 
 ### Polymorphism
-The `Trackable` interface is implemented by both `RepairJob` and `RepairRecord`. The application stores them in a `List<Trackable>` and calls `trackStatus()`, which resolves to the runtime implementation.
+The `Trackable` interface is implemented by `RepairJob` and `Payment`. The application stores both in a `List<Trackable>` and calls `trackStatus()`, which resolves to the runtime implementation.
 
 Example:
 
 ```java
 List<Trackable> records = new ArrayList<>();
 records.add(new RepairJob(...));
-records.add(new RepairRecord(...));
+records.add(new Payment(...));
 
 for (Trackable item : records) {
     System.out.println(item.trackStatus());
@@ -214,13 +282,14 @@ A request to move to the same status is treated as a harmless no-op. Any other t
 1. Start the app and show the dashboard.
 2. Register a customer and device.
 3. Create a repair job.
-4. Change status from RECEIVED to IN_PROGRESS to READY_FOR_COLLECTION to COMPLETED.
-5. Show the search feature and repair history.
-6. Explain the custom exception and the OOP examples.
+4. Set a repair cost and record a partial or full payment.
+5. Change status from RECEIVED to IN_PROGRESS to READY_FOR_COLLECTION to COMPLETED.
+6. Show search, payment history, the outstanding balance, and repair history.
+7. Explain the custom exception and the OOP examples.
 
 ## Known limitations
 
-- The project is intentionally small and does not include payments, authentication, SMS notifications, or analytics.
+- The project is intentionally small and does not include authentication, SMS notifications, or analytics.
 - Local PostgreSQL must be available and configured before the application can connect.
 
 ## Project structure
