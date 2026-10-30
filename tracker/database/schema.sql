@@ -38,6 +38,12 @@ ALTER TABLE repair_jobs
     ADD COLUMN IF NOT EXISTS repair_outcome VARCHAR(20) NOT NULL DEFAULT 'PENDING'
     CHECK (repair_outcome IN ('PENDING', 'FIXED', 'NOT_FIXED'));
 
+ALTER TABLE repair_jobs
+    ADD COLUMN IF NOT EXISTS payment_status VARCHAR(20) NOT NULL DEFAULT 'NOT_PAID';
+ALTER TABLE repair_jobs DROP CONSTRAINT IF EXISTS repair_jobs_payment_status_check;
+ALTER TABLE repair_jobs ADD CONSTRAINT repair_jobs_payment_status_check
+    CHECK (payment_status IN ('PAID', 'NOT_PAID'));
+
 CREATE TABLE IF NOT EXISTS repair_records (
     id SERIAL PRIMARY KEY,
     repair_job_id INT NOT NULL REFERENCES repair_jobs(id) ON DELETE CASCADE,

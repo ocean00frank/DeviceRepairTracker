@@ -12,7 +12,7 @@ Small repair shops often track jobs using paper notes, WhatsApp messages, and ha
 - Record devices with type, brand, and model.
 - Create, view, search, and manage repair jobs.
 - Track the repair outcome as pending, fixed, or not fixed.
-- Set a repair cost, record payments, and see the remaining balance.
+- Set a repair price and payment status when creating a job, then update it to paid or not paid from the selected repair panel.
 - Track status across IN_PROGRESS -> READY_FOR_COLLECTION -> COMPLETED.
 - Persist customers, devices, repair jobs, and status history in PostgreSQL using JDBC and PreparedStatement.
 - Persist repair costs and payment records in PostgreSQL.
@@ -132,7 +132,7 @@ Request body:
 ```
 
 ### POST /api/repair-jobs
-Creates a repair job.
+Creates a repair job with its price and initial payment status.
 
 Request body:
 
@@ -141,7 +141,9 @@ Request body:
   "customerId": 1,
   "deviceId": 1,
   "reportedFault": "Screen cracked",
-  "repairNotes": "Customer reported a dropped phone"
+  "repairNotes": "Customer reported a dropped phone",
+  "repairCost": 120.00,
+  "paymentStatus": "NOT_PAID"
 }
 ```
 
@@ -150,6 +152,17 @@ Lists all repair jobs.
 
 ### GET /api/repair-jobs/{id}
 Gets a single repair job, status history, and payment summary by ID.
+
+### PUT /api/repair-jobs/{id}/payment-status
+Updates the selected job's payment status to `PAID` or `NOT_PAID`.
+
+Request body:
+
+```json
+{
+  "paymentStatus": "PAID"
+}
+```
 
 ### PUT /api/repair-jobs/{id}
 Updates the reported fault and repair notes for the selected repair job.
@@ -189,7 +202,7 @@ Request body:
 Returns the repair cost, total paid, outstanding balance, and payment history.
 
 ### POST /api/repair-jobs/{id}/payments
-Records a payment with amount, method, and status (`PENDING`, `PAID`, or `FAILED`). Set the repair cost first; paid and pending amounts cannot exceed it.
+Records a detailed payment transaction for integrations that need amount-level receipts. The main UI uses the repair job's `PAID` or `NOT_PAID` status.
 
 Request body:
 

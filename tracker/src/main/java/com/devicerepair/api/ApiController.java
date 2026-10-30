@@ -72,7 +72,8 @@ public class ApiController {
         app.post("/api/repair-jobs", ctx -> {
             try {
                 JobRequest request = ctx.bodyAsClass(JobRequest.class);
-                RepairJob job = manager.createRepairJob(request.customerId(), request.deviceId(), request.reportedFault(), request.repairNotes());
+                RepairJob job = manager.createRepairJob(request.customerId(), request.deviceId(), request.reportedFault(),
+                    request.repairNotes(), request.repairCost(), request.paymentStatus());
                 ctx.status(201).json(job);
             } catch (IllegalArgumentException e) {
                 ctx.status(400).json(errorResponse("Invalid repair job input", e.getMessage()));
@@ -145,6 +146,20 @@ public class ApiController {
                 ctx.status(400).json(errorResponse("Invalid repair outcome", e.getMessage()));
             } catch (SQLException e) {
                 ctx.status(500).json(errorResponse("Database error", "Unable to save repair outcome"));
+            }
+        });
+
+        app.put("/api/repair-jobs/{id}/payment-status", ctx -> {
+            try {
+                int id = Integer.parseInt(ctx.pathParam("id"));
+                PaymentStatusRequest request = ctx.bodyAsClass(PaymentStatusRequest.class);
+                ctx.json(manager.updatePaymentStatus(id, request.paymentStatus()));
+            } catch (NumberFormatException e) {
+                ctx.status(400).json(errorResponse("Invalid ID", "Repair job ID must be a number"));
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).json(errorResponse("Invalid payment status", e.getMessage()));
+            } catch (SQLException e) {
+                ctx.status(500).json(errorResponse("Database error", "Unable to save payment status"));
             }
         });
 
@@ -245,7 +260,8 @@ public class ApiController {
     public record DeviceRequest(int customerId, String deviceType, String brand, String model) {
     }
 
-    public record JobRequest(int customerId, int deviceId, String reportedFault, String repairNotes) {
+    public record JobRequest(int customerId, int deviceId, String reportedFault, String repairNotes,
+                             BigDecimal repairCost, String paymentStatus) {
     }
 
     public record CostRequest(BigDecimal repairCost) {
@@ -258,6 +274,9 @@ public class ApiController {
     }
 
     public record PaymentRequest(BigDecimal amount, String paymentMethod, String paymentStatus) {
+    }
+
+    public record PaymentStatusRequest(String paymentStatus) {
     }
 
     public record StatusRequest(String status, String notes) {

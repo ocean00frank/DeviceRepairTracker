@@ -16,6 +16,7 @@ public class RepairJob implements Trackable {
     private String reportedFault;
     private String repairNotes;
     private BigDecimal repairCost;
+    private String paymentStatus = "NOT_PAID";
     private RepairStatus status;
     private String repairOutcome = "PENDING";
     private LocalDateTime createdAt;
@@ -91,6 +92,17 @@ public class RepairJob implements Trackable {
 
     public BigDecimal getRepairCost() {
         return repairCost;
+    }
+
+    public String getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(String paymentStatus) {
+        if (paymentStatus == null || !paymentStatus.trim().matches("(?i)PAID|NOT_PAID")) {
+            throw new IllegalArgumentException("Payment status must be PAID or NOT_PAID");
+        }
+        this.paymentStatus = paymentStatus.trim().toUpperCase(java.util.Locale.ROOT);
     }
 
     public void setRepairCost(BigDecimal repairCost) {

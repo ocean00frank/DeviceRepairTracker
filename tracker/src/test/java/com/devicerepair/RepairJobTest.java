@@ -48,6 +48,17 @@ class RepairJobTest {
     }
 
     @Test
+    void tracksWhetherTheRepairHasBeenPaid() {
+        RepairJob job = new RepairJob();
+
+        assertEquals("NOT_PAID", job.getPaymentStatus());
+        job.setPaymentStatus("paid");
+
+        assertEquals("PAID", job.getPaymentStatus());
+        assertThrows(IllegalArgumentException.class, () -> job.setPaymentStatus("PENDING"));
+    }
+
+    @Test
     void trackStatusProvidesRuntimeStatusSummary() {
         RepairJob job = new RepairJob(1, 10, 20, "Charging port", "Need port replacement");
         var summary = job.trackStatus();

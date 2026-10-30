@@ -135,7 +135,7 @@ h1, h2, h3, p {
 
 .finance-summary {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
     margin-bottom: 16px;
 }
@@ -143,18 +143,6 @@ h1, h2, h3, p {
 .finance-summary > div {
     display: grid;
     gap: 4px;
-}
-
-.finance-form {
-    display: grid;
-    grid-template-columns: minmax(160px, 1fr) minmax(160px, 1fr) auto;
-    align-items: end;
-    gap: 12px;
-    margin-bottom: 14px;
-}
-
-.finance-form:first-of-type {
-    grid-template-columns: minmax(160px, 1fr) auto;
 }
 
 .form-hint {
@@ -307,11 +295,6 @@ tbody tr.selected {
     }
 
     .finance-summary,
-    .finance-form,
-    .finance-form:first-of-type {
-        grid-template-columns: 1fr;
-    }
-
     .topbar,
     .section-header {
         flex-direction: column;

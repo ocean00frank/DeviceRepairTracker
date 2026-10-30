@@ -11,7 +11,7 @@ import java.util.List;
 
 public class RepairJobRepository {
     public RepairJob save(RepairJob repairJob) throws SQLException {
-        String sql = "INSERT INTO repair_jobs (customer_id, device_id, reported_fault, repair_notes, repair_cost, repair_outcome, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO repair_jobs (customer_id, device_id, reported_fault, repair_notes, repair_cost, payment_status, repair_outcome, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = DatabaseConfig.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setInt(1, repairJob.getCustomerId());
@@ -19,10 +19,11 @@ public class RepairJobRepository {
             statement.setString(3, repairJob.getReportedFault());
             statement.setString(4, repairJob.getRepairNotes());
             statement.setBigDecimal(5, repairJob.getRepairCost());
-            statement.setString(6, repairJob.getRepairOutcome());
-            statement.setString(7, repairJob.getStatus().name());
-            statement.setTimestamp(8, Timestamp.valueOf(repairJob.getCreatedAt()));
-            statement.setTimestamp(9, Timestamp.valueOf(repairJob.getUpdatedAt()));
+            statement.setString(6, repairJob.getPaymentStatus());
+            statement.setString(7, repairJob.getRepairOutcome());
+            statement.setString(8, repairJob.getStatus().name());
+            statement.setTimestamp(9, Timestamp.valueOf(repairJob.getCreatedAt()));
+            statement.setTimestamp(10, Timestamp.valueOf(repairJob.getUpdatedAt()));
             statement.executeUpdate();
 
             try (ResultSet keys = statement.getGeneratedKeys()) {
@@ -35,7 +36,7 @@ public class RepairJobRepository {
     }
 
     public RepairJob findById(int id) throws SQLException {
-        String sql = "SELECT id, customer_id, device_id, reported_fault, repair_notes, repair_cost, repair_outcome, status, created_at, updated_at FROM repair_jobs WHERE id = ?";
+        String sql = "SELECT id, customer_id, device_id, reported_fault, repair_notes, repair_cost, payment_status, repair_outcome, status, created_at, updated_at FROM repair_jobs WHERE id = ?";
         try (Connection connection = DatabaseConfig.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
@@ -48,6 +49,7 @@ public class RepairJobRepository {
                     job.setReportedFault(rs.getString("reported_fault"));
                     job.setRepairNotes(rs.getString("repair_notes"));
                     job.setRepairCost(rs.getBigDecimal("repair_cost"));
+                    job.setPaymentStatus(rs.getString("payment_status"));
                     job.setRepairOutcome(rs.getString("repair_outcome"));
                     job.setStatus(RepairStatus.fromString(rs.getString("status")));
                     job.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
@@ -61,7 +63,7 @@ public class RepairJobRepository {
 
     public List<RepairJob> findAll() throws SQLException {
         List<RepairJob> jobs = new ArrayList<>();
-        String sql = "SELECT id, customer_id, device_id, reported_fault, repair_notes, repair_cost, repair_outcome, status, created_at, updated_at FROM repair_jobs ORDER BY id";
+        String sql = "SELECT id, customer_id, device_id, reported_fault, repair_notes, repair_cost, payment_status, repair_outcome, status, created_at, updated_at FROM repair_jobs ORDER BY id";
         try (Connection connection = DatabaseConfig.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet rs = statement.executeQuery()) {
@@ -73,6 +75,7 @@ public class RepairJobRepository {
                 job.setReportedFault(rs.getString("reported_fault"));
                 job.setRepairNotes(rs.getString("repair_notes"));
                 job.setRepairCost(rs.getBigDecimal("repair_cost"));
+                job.setPaymentStatus(rs.getString("payment_status"));
                 job.setRepairOutcome(rs.getString("repair_outcome"));
                 job.setStatus(RepairStatus.fromString(rs.getString("status")));
                 job.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
@@ -85,7 +88,7 @@ public class RepairJobRepository {
 
     public List<RepairJob> search(String query) throws SQLException {
         List<RepairJob> results = new ArrayList<>();
-        String sql = "SELECT r.id, r.customer_id, r.device_id, r.reported_fault, r.repair_notes, r.repair_cost, r.repair_outcome, r.status, r.created_at, r.updated_at " +
+        String sql = "SELECT r.id, r.customer_id, r.device_id, r.reported_fault, r.repair_notes, r.repair_cost, r.payment_status, r.repair_outcome, r.status, r.created_at, r.updated_at " +
                 "FROM repair_jobs r " +
                 "LEFT JOIN customers c ON c.id = r.customer_id " +
                 "LEFT JOIN devices d ON d.id = r.device_id " +
@@ -107,6 +110,7 @@ public class RepairJobRepository {
                     job.setReportedFault(rs.getString("reported_fault"));
                     job.setRepairNotes(rs.getString("repair_notes"));
                     job.setRepairCost(rs.getBigDecimal("repair_cost"));
+                    job.setPaymentStatus(rs.getString("payment_status"));
                     job.setRepairOutcome(rs.getString("repair_outcome"));
                     job.setStatus(RepairStatus.fromString(rs.getString("status")));
                     job.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
@@ -154,6 +158,16 @@ public class RepairJobRepository {
         }
     }
 
+    public void updatePaymentStatus(int jobId, String paymentStatus) throws SQLException {
+        String sql = "UPDATE repair_jobs SET payment_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+        try (Connection connection = DatabaseConfig.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, paymentStatus);
+            statement.setInt(2, jobId);
+            statement.executeUpdate();
+        }
+    }
+
     public void updateRepairDetails(int jobId, String reportedFault, String repairNotes) throws SQLException {
         String sql = "UPDATE repair_jobs SET reported_fault = ?, repair_notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
         try (Connection connection = DatabaseConfig.getConnection();
@@ -167,7 +181,7 @@ public class RepairJobRepository {
 
     public List<RepairJob> findByStatus(RepairStatus status) throws SQLException {
         List<RepairJob> jobs = new ArrayList<>();
-        String sql = "SELECT id, customer_id, device_id, reported_fault, repair_notes, repair_cost, repair_outcome, status, created_at, updated_at FROM repair_jobs WHERE status = ? ORDER BY id";
+        String sql = "SELECT id, customer_id, device_id, reported_fault, repair_notes, repair_cost, payment_status, repair_outcome, status, created_at, updated_at FROM repair_jobs WHERE status = ? ORDER BY id";
         try (Connection connection = DatabaseConfig.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, status.name());
@@ -180,6 +194,7 @@ public class RepairJobRepository {
                     job.setReportedFault(rs.getString("reported_fault"));
                     job.setRepairNotes(rs.getString("repair_notes"));
                     job.setRepairCost(rs.getBigDecimal("repair_cost"));
+                    job.setPaymentStatus(rs.getString("payment_status"));
                     job.setRepairOutcome(rs.getString("repair_outcome"));
                     job.setStatus(RepairStatus.fromString(rs.getString("status")));
                     job.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());

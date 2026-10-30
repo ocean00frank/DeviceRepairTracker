@@ -41,7 +41,11 @@ public class RepairManager {
         return deviceRepository.save(device);
     }
 
-    public RepairJob createRepairJob(int customerId, int deviceId, String reportedFault, String repairNotes) throws SQLException {
+    public RepairJob createRepairJob(int customerId, int deviceId, String reportedFault, String repairNotes,
+                                     BigDecimal repairCost, String paymentStatus) throws SQLException {
+        if (repairCost == null) {
+            throw new IllegalArgumentException("Repair price is required");
+        }
         Customer customer = customerRepository.findById(customerId);
         Device device = deviceRepository.findById(deviceId);
 
@@ -57,6 +61,8 @@ public class RepairManager {
         job.setDeviceId(deviceId);
         job.setReportedFault(reportedFault);
         job.setRepairNotes(repairNotes);
+        job.setRepairCost(repairCost);
+        job.setPaymentStatus(paymentStatus == null ? "NOT_PAID" : paymentStatus);
         job.setCreatedAt(LocalDateTime.now());
         job.setUpdatedAt(job.getCreatedAt());
 
@@ -118,6 +124,17 @@ public class RepairManager {
 
         job.setRepairOutcome(repairOutcome);
         repairJobRepository.updateRepairOutcome(jobId, job.getRepairOutcome());
+        return repairJobRepository.findById(jobId);
+    }
+
+    public RepairJob updatePaymentStatus(int jobId, String paymentStatus) throws SQLException {
+        RepairJob job = repairJobRepository.findById(jobId);
+        if (job == null) {
+            throw new IllegalArgumentException("Repair job not found");
+        }
+
+        job.setPaymentStatus(paymentStatus);
+        repairJobRepository.updatePaymentStatus(jobId, job.getPaymentStatus());
         return repairJobRepository.findById(jobId);
     }
 

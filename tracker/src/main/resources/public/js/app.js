@@ -20,8 +20,8 @@ const jobDetailEmpty = document.getElementById('jobDetailEmpty');
 const jobDetailContent = document.getElementById('jobDetailContent');
 const statusForm = document.getElementById('statusForm');
 const statusSelect = document.getElementById('statusSelect');
-const costForm = document.getElementById('costForm');
-const paymentForm = document.getElementById('paymentForm');
+const paymentStatusForm = document.getElementById('paymentStatusForm');
+const paymentStatusSelect = document.getElementById('paymentStatusSelect');
 const outcomeForm = document.getElementById('outcomeForm');
 const outcomeSelect = document.getElementById('outcomeSelect');
 
@@ -120,7 +120,7 @@ async function loadJobs() {
 
 function renderJobs(jobs) {
     if (!jobs.length) {
-        tableBody.innerHTML = '<tr><td colspan="9"><div class="empty-state">No repair jobs found.</div></td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="10"><div class="empty-state">No repair jobs found.</div></td></tr>';
         return;
     }
 
@@ -138,6 +138,7 @@ function renderJobs(jobs) {
                 <td><span class="badge ${statusClass}">${formatRepairStatus(job.status)}</span></td>
                 <td>${job.repairOutcome.replace(/_/g, ' ')}</td>
                 <td>${formatAmount(job.repairCost)}</td>
+                <td>${formatPaymentStatus(job.paymentStatus)}</td>
                 <td>${formatDate(job.createdAt)}</td>
             </tr>
         `;
@@ -163,7 +164,7 @@ function getDeviceById(deviceId) {
 async function renderJobDetail(jobId) {
     try {
         const result = await fetchJson(`/api/repair-jobs/${jobId}`);
-        const { job, records, allowedNextStatuses, finance } = result;
+        const { job, records, allowedNextStatuses } = result;
         const device = getDeviceById(job.deviceId) || { deviceType: 'Device', brand: 'Unknown', model: 'Unknown' };
         const customer = state.customers.find(item => item.id === job.customerId) || { fullName: 'Unknown customer' };
         jobDetailEmpty.classList.add('hidden');
@@ -173,14 +174,9 @@ async function renderJobDetail(jobId) {
         document.getElementById('detailFault').textContent = job.reportedFault;
         document.getElementById('detailOutcome').textContent = job.repairOutcome.replace(/_/g, ' ');
         outcomeSelect.value = job.repairOutcome;
-        document.getElementById('repairCostDisplay').textContent = formatAmount(finance.repairCost);
-        document.getElementById('totalPaidDisplay').textContent = formatAmount(finance.totalPaid);
-        document.getElementById('balanceDisplay').textContent = formatAmount(finance.balance);
-
-        const paymentList = document.getElementById('paymentList');
-        paymentList.innerHTML = finance.payments.length
-            ? finance.payments.map(payment => `<li>${formatAmount(payment.amount)} via ${payment.paymentMethod} - ${payment.paymentStatus} (${formatDate(payment.paidAt)})</li>`).join('')
-            : '<li>No payments recorded yet.</li>';
+        document.getElementById('repairCostDisplay').textContent = formatAmount(job.repairCost);
+        document.getElementById('paymentStatusDisplay').textContent = formatPaymentStatus(job.paymentStatus);
+        paymentStatusSelect.value = job.paymentStatus;
 
         const statusLabels = {
             READY_FOR_COLLECTION: 'Ready for collection',
@@ -254,7 +250,9 @@ async function submitJobForm(event) {
                 customerId: Number(formData.get('customerId')),
                 deviceId: Number(formData.get('deviceId')),
                 reportedFault: formData.get('reportedFault'),
-                repairNotes: formData.get('repairNotes')
+                repairNotes: formData.get('repairNotes'),
+                repairCost: Number(formData.get('repairCost')),
+                paymentStatus: formData.get('paymentStatus')
             })
         });
         jobForm.reset();
@@ -287,26 +285,6 @@ async function handleStatusUpdate(event) {
     }
 }
 
-async function submitCostForm(event) {
-    event.preventDefault();
-    if (!state.selectedJobId) {
-        alert('Select a job first');
-        return;
-    }
-
-    const formData = new FormData(costForm);
-    try {
-        await fetchJson(`/api/repair-jobs/${state.selectedJobId}/cost`, {
-            method: 'PUT',
-            body: JSON.stringify({ repairCost: Number(formData.get('repairCost')) })
-        });
-        await loadJobs();
-        await renderJobDetail(state.selectedJobId);
-    } catch (error) {
-        alert(error.message);
-    }
-}
-
 async function submitOutcomeForm(event) {
     event.preventDefault();
     if (!state.selectedJobId) {
@@ -326,23 +304,18 @@ async function submitOutcomeForm(event) {
     }
 }
 
-async function submitPaymentForm(event) {
+async function submitPaymentStatusForm(event) {
     event.preventDefault();
     if (!state.selectedJobId) {
-        alert('Select a job first');
+        alert('Select a repair job first');
         return;
     }
 
-    const formData = new FormData(paymentForm);
     try {
-        await fetchJson(`/api/repair-jobs/${state.selectedJobId}/payments`, {
-            method: 'POST',
-            body: JSON.stringify({
-                amount: Number(formData.get('amount')),
-                paymentMethod: formData.get('paymentMethod')
-            })
+        await fetchJson(`/api/repair-jobs/${state.selectedJobId}/payment-status`, {
+            method: 'PUT',
+            body: JSON.stringify({ paymentStatus: paymentStatusSelect.value })
         });
-        paymentForm.reset();
         await loadJobs();
         await renderJobDetail(state.selectedJobId);
     } catch (error) {
@@ -364,8 +337,7 @@ customerForm.addEventListener('submit', submitCustomerForm);
 deviceForm.addEventListener('submit', submitDeviceForm);
 jobForm.addEventListener('submit', submitJobForm);
 statusForm.addEventListener('submit', handleStatusUpdate);
-costForm.addEventListener('submit', submitCostForm);
-paymentForm.addEventListener('submit', submitPaymentForm);
+paymentStatusForm.addEventListener('submit', submitPaymentStatusForm);
 outcomeForm.addEventListener('submit', submitOutcomeForm);
 
 document.getElementById('jobCustomerSelect').addEventListener('change', async (event) => {
@@ -389,6 +361,10 @@ function formatDate(value) {
 
 function formatAmount(value) {
     return value == null ? 'Not set' : Number(value).toFixed(2);
+}
+
+function formatPaymentStatus(status) {
+    return status === 'PAID' ? 'Paid' : 'Not paid';
 }
 
 function formatRepairStatus(status) {

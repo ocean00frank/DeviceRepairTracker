@@ -91,6 +91,17 @@
                         Repair notes
                         <textarea name="repairNotes" rows="2"></textarea>
                     </label>
+                    <label>
+                        Repair price
+                        <input type="number" name="repairCost" min="0.01" step="0.01" required />
+                    </label>
+                    <label>
+                        Payment status
+                        <select name="paymentStatus" required>
+                            <option value="NOT_PAID" selected>Not paid</option>
+                            <option value="PAID">Paid</option>
+                        </select>
+                    </label>
                     <button type="submit">Create repair job</button>
                 </form>
             </section>
@@ -112,6 +123,7 @@
                                 <th>Status</th>
                                 <th>Result</th>
                                 <th>Cost</th>
+                                <th>Payment</th>
                                 <th>Date received</th>
                             </tr>
                         </thead>
@@ -127,7 +139,7 @@
                         <p id="selectedJobContext" class="detail-context">No repair selected</p>
                     </div>
                 </div>
-                <div id="jobDetailEmpty" class="empty-state">Select a repair job above to update progress or record a payment.</div>
+                <div id="jobDetailEmpty" class="empty-state">Select a repair job above to update progress or payment status.</div>
                 <div id="jobDetailContent" class="hidden">
                     <div class="detail-meta">
                         <div>
@@ -158,36 +170,21 @@
                     </form>
 
                     <section class="finance-section" aria-labelledby="financeHeading">
-                        <h3 id="financeHeading">Repair cost and payments</h3>
+                        <h3 id="financeHeading">Payment</h3>
                         <div class="finance-summary">
-                            <div><span class="label">Repair cost</span><strong id="repairCostDisplay">Not set</strong></div>
-                            <div><span class="label">Paid</span><strong id="totalPaidDisplay">0.00</strong></div>
-                            <div><span class="label">Balance</span><strong id="balanceDisplay">Not set</strong></div>
+                            <div><span class="label">Repair price</span><strong id="repairCostDisplay">Not set</strong></div>
+                            <div><span class="label">Current status</span><strong id="paymentStatusDisplay">NOT_PAID</strong></div>
                         </div>
-                        <form id="costForm" class="finance-form">
+                        <form id="paymentStatusForm" class="status-form">
                             <label>
-                                Set repair cost
-                                <input type="number" name="repairCost" min="0.01" step="0.01" required />
-                            </label>
-                            <button type="submit">Save cost</button>
-                        </form>
-                        <form id="paymentForm" class="finance-form">
-                            <label>
-                                Payment amount
-                                <input type="number" name="amount" min="0.01" step="0.01" required />
-                            </label>
-                            <label>
-                                Payment method
-                                <select name="paymentMethod" required>
-                                    <option value="Cash">Cash</option>
-                                    <option value="Mobile money">Mobile money</option>
-                                    <option value="Card">Card</option>
-                                    <option value="Bank transfer">Bank transfer</option>
+                                Update payment
+                                <select id="paymentStatusSelect" name="paymentStatus" required>
+                                    <option value="NOT_PAID">Not paid</option>
+                                    <option value="PAID">Paid</option>
                                 </select>
                             </label>
-                            <button type="submit">Record payment</button>
+                            <button type="submit">Save payment status</button>
                         </form>
-                        <ul id="paymentList" class="history-list"></ul>
                     </section>
 
                     <div>
