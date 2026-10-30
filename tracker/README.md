@@ -1,91 +1,98 @@
 # RepairTrack: Device Repair Tracker
 
-A Java + Javalin application for managing repair customers, devices, jobs, costs, and payments.
+RepairTrack is a Java web app for repair shops. It keeps customer and device details, tracks each repair from **In progress** to **Ready for collection** and **Completed**, records whether the repair was fixed, and tracks the repair price and whether it has been paid.
 
-## Problem and aim
+## Requirements
 
-Small repair shops often track jobs using paper notes, WhatsApp messages, and handwritten receipts. That causes lost records, bad status tracking, and confusion over which devices are waiting to be collected or paid for. This project provides a lightweight system for registering customers, recording devices, creating repair jobs, updating statuses, tracking repair costs and payments, and searching records.
+- JDK 27
+- Apache Maven
+- PostgreSQL running locally
+- Git
 
-## Objectives
+## Clone the project
 
-- Register customers and their contact details.
-- Record devices with type, brand, and model.
-- Create, view, search, and manage repair jobs.
-- Track the repair outcome as pending, fixed, or not fixed.
-- Set a repair price and payment status when creating a job, then update it to paid or not paid from the selected repair panel.
-- Track status across IN_PROGRESS -> READY_FOR_COLLECTION -> COMPLETED.
-- Persist customers, devices, repair jobs, and status history in PostgreSQL using JDBC and PreparedStatement.
-- Persist repair costs and payment records in PostgreSQL.
-- Reject invalid transitions with a custom checked exception.
+Replace `<repository-url>` with the clone URL for your Git repository:
 
-## Technologies
+```powershell
+git clone <repository-url>
+cd <repository-folder>
+cd tracker
+```
 
-- Java 27
-- Maven
-- Javalin 5
-- PostgreSQL JDBC driver
-- Jackson JSON libraries
-- Dotenv Java
-- HTML, CSS, and vanilla JavaScript
+The Maven project (`pom.xml`) is inside the `tracker` folder.
 
-## Prerequisites
+## Create the database
 
-- JDK 27 installed
-- Maven installed
-- PostgreSQL server running locally
-- A database named DeviceRepair_db, or adjust the value in your local .env file if your installation uses a different database name
+Create the database once in pgAdmin or `psql`:
 
-## PostgreSQL configuration
+```sql
+CREATE DATABASE "DeviceRepair_db";
+```
 
-Create a local .env file in the project root using the sample values below:
+The app does not create the database itself. On startup, it runs `database/schema.sql` to create or update the tables and indexes. Its additive migrations preserve existing records.
+
+The PostgreSQL user configured below needs permission to connect to the database and create or update objects in the `public` schema. If needed, grant access as a database administrator:
+
+```sql
+GRANT CONNECT ON DATABASE "DeviceRepair_db" TO your_user;
+GRANT USAGE, CREATE ON SCHEMA public TO your_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO your_user;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO your_user;
+```
+
+## Configure the connection
+
+From the `tracker` directory, create your local environment file:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Edit `.env` and enter the PostgreSQL username and password for your machine:
 
 ```env
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=DeviceRepair_db
 DB_USER=your_postgresql_username
-DB_PASSWORD=change_me
+DB_PASSWORD=your_postgresql_password
 ```
 
-The application reads environment variables from .env and uses them to connect to PostgreSQL. Do not commit real credentials. The .env file is ignored by Git.
+Keep `.env` private. It is ignored by Git; do not commit database credentials.
 
-PostgreSQL stores customers, devices, repair jobs, status history, repair costs, and payment records. Startup applies additive `IF NOT EXISTS` schema changes and does not drop existing tables or records.
+## Build and test
 
-If your PostgreSQL role does not have permission to create tables or modify data, grant at least:
+Run these commands from the `tracker` directory:
 
-```sql
-GRANT CONNECT ON DATABASE "DeviceRepair_db" TO your_user;
-GRANT USAGE ON SCHEMA public TO your_user;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO your_user;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO your_user;
+```powershell
+mvn clean test
 ```
 
-## Initialising the schema
+## Start the server
 
-From the project root:
-
-```bash
-mvn compile
+```powershell
+mvn exec:java
 ```
 
-The app reads and executes the schema script at `database/schema.sql` when it starts. It uses `CREATE TABLE IF NOT EXISTS` and `CREATE INDEX IF NOT EXISTS`, so it does not delete existing records.
+When startup succeeds, open <http://localhost:7000/>. Check the database connection at <http://localhost:7000/api/health>.
 
-## Running the app
+If port 7000 is already in use, start the app on another port, for example:
 
-```bash
-mvn clean compile exec:java -Dexec.mainClass=com.devicerepair.Main
+```powershell
+mvn exec:java "-Dexec.args=7001"
 ```
 
-If `exec-maven-plugin` is not configured, run the application via:
+Then open <http://localhost:7001/> instead. Stop the server with `Ctrl+C` in the terminal where Maven is running.
 
-```bash
-mvn package
-java -jar target/tracker-1.0-SNAPSHOT.jar
-```
+## Using the app
 
-The frontend is served at:
+1. Register a customer and their device.
+2. Create a repair job, entering its price and choosing **Paid** or **Not paid**.
+3. Select a job in the repair list to update its progress or payment status.
+4. Update the repair result to **Fixed** or **Not fixed** when appropriate.
+5. Search for repairs by customer, device, fault, or job ID.
 
-- http://localhost:7000/
+Payment status on a repair job is `PAID` or `NOT_PAID`. Detailed payment transaction endpoints are also available for integrations.
 
 ## API endpoints
 
@@ -177,7 +184,7 @@ Request body:
 ```
 
 ### PUT /api/repair-jobs/{id}/outcome
-Saves whether the device was fixed. Final outcomes are available once the job is ready for collection.
+Saves whether the device was fixed. The result can be updated at any repair stage.
 
 Request body:
 
@@ -294,10 +301,11 @@ A request to move to the same status is treated as a harmless no-op. Any other t
 1. Start the app and show the dashboard.
 2. Register a customer and device.
 3. Create a repair job.
-4. Set a repair cost and record a partial or full payment.
+4. Set the repair price and initial payment state when creating the job.
 5. Change status from IN_PROGRESS to READY_FOR_COLLECTION to COMPLETED.
-6. Show search, payment history, the outstanding balance, and repair history.
-7. Explain the custom exception and the OOP examples.
+6. Update payment state between Paid and Not paid from the selected repair panel.
+7. Show search, fixed/not-fixed result, and repair history.
+8. Explain the custom exception and the OOP examples.
 
 ## Known limitations
 
@@ -308,19 +316,48 @@ A request to move to the same status is treated as a harmless no-op. Any other t
 
 ```text
 tracker/
-├── database/
-│   └── schema.sql
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/devicerepair/
-│   │   └── resources/
-│   │       └── public/
-│   └── test/
-├── .env
-├── .env.example
-├── .gitignore
-├── pom.xml
-├── README.md
-└── target/
+├── .vscode/                           # Editor-specific workspace configuration
+│   └── settings.json                  # VS Code Java runtime and project settings
+├── database/                          # Database schema and migration scripts
+│   └── schema.sql                     # PostgreSQL tables, constraints, indexes, and migrations
+├── src/                               # Application source code and tests
+│   ├── main/                           # Files required to run the application
+│   │   ├── java/com/devicerepair/      # Java application packages
+│   │   │   ├── api/                    # HTTP endpoints
+│   │   │   │   └── ApiController.java # HTTP routes and request/response handling
+│   │   │   ├── database/               # Database connection setup
+│   │   │   │   └── DatabaseConfig.java # PostgreSQL connection and schema startup
+│   │   │   ├── exception/              # Application-specific errors
+│   │   │   │   └── InvalidRepairStatusException.java # Invalid repair transition error
+│   │   │   ├── model/                  # Domain objects and shared types
+│   │   │   │   ├── Customer.java      # Customer details and validation
+│   │   │   │   ├── Device.java        # Device details and owner
+│   │   │   │   ├── Payment.java       # Individual payment transaction
+│   │   │   │   ├── RepairJob.java     # Repair details, price, payment state, and progress
+│   │   │   │   ├── RepairStatus.java  # Allowed repair workflow statuses
+│   │   │   │   └── Trackable.java     # Shared status-tracking interface
+│   │   │   ├── repository/             # SQL data access classes
+│   │   │   │   ├── CustomerRepository.java # Customer SQL operations
+│   │   │   │   ├── DeviceRepository.java   # Device SQL operations
+│   │   │   │   ├── PaymentRepository.java  # Payment SQL operations and balances
+│   │   │   │   ├── RepairHistoryRepository.java # Reads repair status history
+│   │   │   │   └── RepairJobRepository.java # Repair-job SQL operations
+│   │   │   ├── service/                # Repair workflow and business rules
+│   │   │   │   └── RepairManager.java # Validates and coordinates repair operations
+│   │   │   └── Main.java              # App entry point; configures and starts Javalin
+│   │   └── resources/public/           # Browser interface files
+│   │       ├── css/style.css          # Web app layout and visual styling
+│   │       ├── index.html             # Dashboard and repair forms
+│   │       └── js/app.js              # Browser logic and backend API calls
+│   └── test/java/com/devicerepair/     # Automated Java tests
+│       ├── PaymentTest.java           # Payment and payment-state validation tests
+│       └── RepairJobTest.java          # Repair model, progress, and serialization tests
+├── .env                               # Local PostgreSQL credentials; do not commit
+├── .env.example                       # Safe template for creating .env
+├── .gitignore                         # Files and local settings excluded from Git
+├── pom.xml                            # Maven dependencies, Java version, and build plugins
+├── README.md                          # Setup, run, API, and project documentation
+└── target/                            # Generated Maven build output; recreated by Maven
 ```
+
+The main code is under `src/main`; automated tests are under `src/test`. The `target` directory is generated when Maven builds the project and does not need to be edited. The `.vscode/settings.json` Java runtime path may need adjusting to match the JDK installation on another computer.
