@@ -4,7 +4,7 @@ RepairTrack is a Java web app for repair shops. It keeps customer and device det
 
 ## Requirements
 
-- JDK 27
+- JDK 17 or newer
 - Apache Maven
 - PostgreSQL running locally
 - Git

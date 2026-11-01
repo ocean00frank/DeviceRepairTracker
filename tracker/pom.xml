@@ -11,8 +11,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>27</maven.compiler.source>
-        <maven.compiler.target>27</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <javalin.version>5.6.3</javalin.version>
         <postgresql.version>42.7.4</postgresql.version>
         <dotenv.version>3.0.0</dotenv.version>
@@ -66,7 +66,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <release>27</release>
+                    <release>17</release>
                 </configuration>
             </plugin>
             <plugin>
