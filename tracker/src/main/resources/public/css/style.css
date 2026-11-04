@@ -1,15 +1,17 @@
 :root {
-    --bg: #f5f7fb;
-    --panel: #ffffff;
-    --line: #dce3ef;
-    --text: #1f2937;
-    --muted: #5f6b7a;
-    --primary: #0f766e;
-    --primary-soft: #dff6f3;
+    --bg: #f3f7ff;
+    --bg-strong: #eaf1ff;
+    --panel: rgba(255, 255, 255, 0.96);
+    --line: #d9e3f0;
+    --text: #172033;
+    --muted: #5f6f87;
+    --primary: #2563eb;
+    --primary-deep: #1d4ed8;
+    --primary-soft: #e0ebff;
     --accent: #f59e0b;
     --success: #10b981;
     --danger: #dc2626;
-    --shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+    --shadow: 0 12px 26px rgba(37, 99, 235, 0.12);
 }
 
 * {
@@ -18,8 +20,10 @@
 
 body {
     margin: 0;
-    background: var(--bg);
-    font-family: Arial, sans-serif;
+    background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.08), transparent 26%),
+        linear-gradient(180deg, var(--bg-strong) 0%, var(--bg) 100%);
+    font-family: "Segoe UI", Arial, sans-serif;
     color: var(--text);
 }
 
@@ -39,27 +43,63 @@ button, input, select, textarea {
     align-items: center;
     gap: 16px;
     margin-bottom: 24px;
+    padding: 18px 22px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(217, 227, 240, 0.9);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(10px);
 }
 
 h1, h2, h3, p {
     margin-top: 0;
 }
 
+h1 {
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    margin-bottom: 0;
+}
+
 .eyebrow {
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    font-size: 0.74rem;
+    font-size: 0.72rem;
+    font-weight: 700;
 }
 
 .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     background: var(--primary-soft);
     color: var(--primary);
-    border: 1px solid rgba(15, 118, 110, 0.27);
+    border: 1px solid rgba(15, 118, 110, 0.25);
     border-radius: 999px;
-    padding: 8px 14px;
+    padding: 9px 14px;
     font-weight: 700;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.status-pill::before {
+    content: "";
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+}
+
+.status-pill.offline {
+    background: #fff1f2;
+    color: #b42318;
+    border-color: rgba(180, 35, 24, 0.2);
+}
+
+.status-pill.offline::before {
+    box-shadow: 0 0 0 4px rgba(180, 35, 24, 0.08);
 }
 
 .cards {
@@ -72,8 +112,14 @@ h1, h2, h3, p {
 .card, .panel {
     background: var(--panel);
     border: 1px solid var(--line);
-    border-radius: 16px;
+    border-radius: 18px;
     box-shadow: var(--shadow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover, .panel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 28px rgba(15, 23, 42, 0.1);
 }
 
 .summary-card {
@@ -84,18 +130,19 @@ h1, h2, h3, p {
     display: block;
     color: var(--muted);
     margin-bottom: 8px;
+    font-weight: 600;
 }
 
 .summary-card strong {
-    font-size: 2rem;
+    font-size: clamp(1.8rem, 2vw, 2.4rem);
 }
 
 .summary-card.accent {
-    background: #fffaf0;
+    background: linear-gradient(135deg, #fffaf0 0%, #fff8e6 100%);
 }
 
 .summary-card.success {
-    background: #ecfdf5;
+    background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
 }
 
 .panel-grid {
@@ -125,10 +172,16 @@ h1, h2, h3, p {
     justify-content: space-between;
     align-items: flex-start;
     gap: 12px;
-    padding: 12px;
+    padding: 12px 14px;
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: 12px;
     background: #f8fafc;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.inventory-item:hover {
+    background: #f1f5f9;
+    border-color: #c9d7ea;
 }
 
 .inventory-item strong,
@@ -156,7 +209,7 @@ h1, h2, h3, p {
 }
 
 .inventory-actions button {
-    padding: 6px 9px;
+    padding: 7px 10px;
     font-size: 0.8rem;
 }
 
@@ -226,27 +279,31 @@ label {
 }
 
 input, select, textarea, button {
-    border-radius: 10px;
+    border-radius: 12px;
     border: 1px solid var(--line);
     padding: 10px 12px;
     background: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 input:focus, select:focus, textarea:focus {
-    outline: 2px solid rgba(15, 118, 110, 0.2);
+    outline: none;
     border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
 }
 
 button {
-    background: var(--primary);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
     color: white;
     font-weight: 700;
     cursor: pointer;
     border: none;
+    box-shadow: 0 10px 18px rgba(15, 118, 110, 0.18);
 }
 
 button:hover {
-    filter: brightness(1.04);
+    filter: brightness(1.02);
+    transform: translateY(-1px);
 }
 
 .list-panel, .detail-panel {
@@ -263,10 +320,16 @@ button:hover {
 
 #searchInput {
     min-width: 260px;
+    border-radius: 999px;
+    background: #f8fafc;
+    padding-left: 16px;
 }
 
 .table-wrap {
     overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.4);
 }
 
 table {
@@ -279,6 +342,14 @@ th, td {
     border-bottom: 1px solid var(--line);
     text-align: left;
     vertical-align: top;
+}
+
+thead th {
+    background: #f8fafc;
+    color: var(--muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 tbody tr {
@@ -319,9 +390,9 @@ tbody tr.selected {
 }
 
 .empty-state {
-    background: #f8fafc;
+    background: linear-gradient(180deg, #f8fafc 0%, #f2f6fb 100%);
     border: 1px dashed var(--line);
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 18px;
     color: var(--muted);
 }
@@ -459,6 +530,44 @@ tbody tr.selected {
 
     .detail-meta {
         gap: 10px;
+    }
+
+    .detail-panel .detail-meta > div,
+    .finance-summary > div {
+        min-width: 0;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #f8fafc;
+    }
+
+    .detail-panel .detail-meta strong,
+    .finance-summary strong {
+        overflow-wrap: anywhere;
+    }
+
+    .detail-panel .status-form {
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+
+    .detail-panel .status-form select,
+    .detail-panel .status-form button {
+        width: 100%;
+    }
+
+    .detail-panel .status-form select {
+        min-height: 44px;
+    }
+
+    .detail-context,
+    .history-list li {
+        overflow-wrap: anywhere;
+    }
+
+    .detail-panel .finance-section {
+        margin-top: 16px;
+        padding-top: 14px;
     }
 
     .table-wrap {
