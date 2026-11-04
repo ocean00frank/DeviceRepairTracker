@@ -145,6 +145,52 @@ h1 {
     background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
 }
 
+#dashboardCards .summary-card {
+    border: 2px solid;
+    padding: 22px 20px;
+}
+
+#dashboardCards .summary-card .label {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+#dashboardCards .summary-card strong {
+    display: block;
+    margin-top: 4px;
+    font-size: clamp(2.2rem, 2.6vw, 2.8rem);
+}
+
+#dashboardCards .summary-card:nth-child(1) {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-color: #2563eb;
+}
+
+#dashboardCards .summary-card:nth-child(1) .label,
+#dashboardCards .summary-card:nth-child(1) strong {
+    color: #1e3a8a;
+}
+
+#dashboardCards .summary-card:nth-child(2) {
+    background: linear-gradient(135deg, #fffbeb 0%, #fde68a 100%);
+    border-color: #d97706;
+}
+
+#dashboardCards .summary-card:nth-child(2) .label,
+#dashboardCards .summary-card:nth-child(2) strong {
+    color: #78350f;
+}
+
+#dashboardCards .summary-card:nth-child(3) {
+    background: linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%);
+    border-color: #059669;
+}
+
+#dashboardCards .summary-card:nth-child(3) .label,
+#dashboardCards .summary-card:nth-child(3) strong {
+    color: #064e3b;
+}
+
 .panel-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(260px, 1fr));
