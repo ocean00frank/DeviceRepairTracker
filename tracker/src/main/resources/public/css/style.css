@@ -425,18 +425,29 @@ tbody tr.selected {
 }
 
 @media (max-width: 560px) {
+    .table-wrap,
+    .table-wrap table,
+    .table-wrap tbody {
+        width: 100%;
+        min-width: 0;
+    }
+
     .table-wrap tbody tr:not(.empty-row) {
         grid-template-columns: minmax(0, 1fr);
     }
 
     .table-wrap tbody tr:not(.empty-row) td {
-        display: grid;
-        grid-template-columns: minmax(100px, 0.7fr) minmax(0, 1.3fr);
-        align-items: start;
-        gap: 10px;
+        display: block;
+        line-height: 1.4;
     }
 
     .table-wrap tbody td::before {
-        margin: 0;
+        margin-bottom: 4px;
+    }
+
+    .table-wrap .badge {
+        max-width: 100%;
+        white-space: normal;
+        overflow-wrap: anywhere;
     }
 }
