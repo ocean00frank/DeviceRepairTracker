@@ -1,5 +1,14 @@
 # Device Repair Tracker
 
+## Problem
+
+Manual record-keeping can lead to lost records, forgotten repair jobs,
+confusion about repair status, and difficulties tracking payments. A simple
+computer-based system is needed to help repair shops organise repair records
+and manage jobs more efficiently.
+
+## Solution
+
 Device Repair Tracker is a Java web application for managing repair-shop
 operations. It stores customers and their devices, creates repair jobs, tracks
 repair progress and outcomes, and records payment information in PostgreSQL.
@@ -94,17 +103,17 @@ To use a different port:
 mvn exec:java "-Dexec.args=7001"
 ```
 
-## Project structure
 
-- `src/main/java/com/devicerepair/Main.java` starts the Javalin server.
-- `src/main/java/com/devicerepair/api` contains REST API routes.
-- `src/main/java/com/devicerepair/model` contains customers, devices, repair
-  jobs, payments, and repair statuses.
-- `src/main/java/com/devicerepair/service` contains business logic.
-- `src/main/java/com/devicerepair/repository` handles database operations.
-- `src/main/resources/public` contains the browser interface.
-- `database/schema.sql` defines the PostgreSQL tables and indexes.
-- `src/test` contains automated tests.
+
+## Main Classes and Their Responsibilities
+
+1. **Customer:** Stores customer details and contact information.
+2. **Device:** Stores device details, including type, brand, and model.
+3. **RepairJob:** Records device faults, repair details, costs, and repair
+   status.
+4. **Payment:** Records payments made for repair jobs.
+5. **RepairManager:** Manages repair jobs and updates their status.
+6. **InvalidRepairStatusException:** Handles invalid repair-status changes.
 
 ## Object-oriented concepts demonstrated
 
@@ -116,9 +125,7 @@ mvn exec:java "-Dexec.args=7001"
 - **Collections:** the application uses Java collections such as `List`,
   `ArrayList`, and `HashMap`.
 
-## Repository collaboration
 
-The team uses one shared GitHub repository. Each member should commit the work
-completed from their own GitHub account, use descriptive commit messages, and
-push changes to the shared repository so contributions remain visible in the
-commit history.
+
+
+
