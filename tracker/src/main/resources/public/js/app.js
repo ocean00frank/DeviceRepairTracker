@@ -237,7 +237,7 @@ async function loadJobs() {
 
 function renderJobs(jobs) {
     if (!jobs.length) {
-        tableBody.innerHTML = '<tr><td colspan="10"><div class="empty-state">No repair jobs found.</div></td></tr>';
+        tableBody.innerHTML = '<tr class="empty-row"><td colspan="10"><div class="empty-state">No repair jobs found.</div></td></tr>';
         return;
     }
 
@@ -247,16 +247,16 @@ function renderJobs(jobs) {
         const statusClass = job.status.replace(/_/g, '-').toLowerCase();
         return `
             <tr data-job-id="${job.id}" class="${job.id === state.selectedJobId ? 'selected' : ''}">
-                <td>#${job.id}</td>
-                <td>${customer.fullName}</td>
-                <td>${customer.phoneNumber}</td>
-                <td>${device.brand} ${device.model}</td>
-                <td>${job.reportedFault}</td>
-                <td><span class="badge ${statusClass}">${formatRepairStatus(job.status)}</span></td>
-                <td>${job.repairOutcome.replace(/_/g, ' ')}</td>
-                <td>${formatAmount(job.repairCost)}</td>
-                <td>${formatPaymentStatus(job.paymentStatus)}</td>
-                <td>${formatDate(job.createdAt)}</td>
+                <td data-label="ID">#${job.id}</td>
+                <td data-label="Customer">${customer.fullName}</td>
+                <td data-label="Contact">${customer.phoneNumber}</td>
+                <td data-label="Device">${device.brand} ${device.model}</td>
+                <td data-label="Fault">${job.reportedFault}</td>
+                <td data-label="Status"><span class="badge ${statusClass}">${formatRepairStatus(job.status)}</span></td>
+                <td data-label="Result">${job.repairOutcome.replace(/_/g, ' ')}</td>
+                <td data-label="Cost">${formatAmount(job.repairCost)}</td>
+                <td data-label="Payment">${formatPaymentStatus(job.paymentStatus)}</td>
+                <td data-label="Date received">${formatDate(job.createdAt)}</td>
             </tr>
         `;
     }).join('');
