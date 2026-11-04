@@ -364,4 +364,116 @@ tbody tr.selected {
         width: 100%;
         min-width: 0;
     }
+
+    .table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        min-width: 900px;
+    }
+}
+
+@media (max-width: 600px) {
+    .app-shell {
+        padding: 16px 12px;
+    }
+
+    .topbar {
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+
+    h1 {
+        font-size: 1.7rem;
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+    }
+
+    h2 {
+        font-size: 1.25rem;
+    }
+
+    .status-pill {
+        padding: 7px 11px;
+    }
+
+    .cards {
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .summary-card,
+    .panel {
+        padding: 16px;
+    }
+
+    .summary-card strong {
+        font-size: 1.7rem;
+    }
+
+    .panel-grid,
+    .inventory-grid {
+        gap: 14px;
+        margin-bottom: 14px;
+    }
+
+    .section-header {
+        gap: 10px;
+    }
+
+    .inventory-item {
+        flex-direction: column;
+    }
+
+    .inventory-actions {
+        justify-content: flex-start;
+        width: 100%;
+    }
+
+    .job-form,
+    .status-form {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .status-form {
+        gap: 12px;
+    }
+
+    input,
+    select,
+    textarea,
+    button {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    button {
+        min-height: 44px;
+    }
+
+    .finance-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .detail-meta {
+        gap: 10px;
+    }
+}
+
+@media (max-width: 360px) {
+    .app-shell {
+        padding: 12px 8px;
+    }
+
+    .panel,
+    .summary-card {
+        padding: 13px;
+    }
+
+    .inventory-actions button {
+        padding: 6px 8px;
+        font-size: 0.75rem;
+    }
 }
