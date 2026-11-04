@@ -1,5 +1,6 @@
 const state = {
     customers: [],
+    devices: [],
     jobs: [],
     selectedJobId: null
 };
@@ -18,12 +19,13 @@ const deviceForm = document.getElementById('deviceForm');
 const jobForm = document.getElementById('jobForm');
 const jobDetailEmpty = document.getElementById('jobDetailEmpty');
 const jobDetailContent = document.getElementById('jobDetailContent');
-const statusForm = document.getElementById('statusForm');
+const repairUpdateForm = document.getElementById('repairUpdateForm');
 const statusSelect = document.getElementById('statusSelect');
 const paymentStatusForm = document.getElementById('paymentStatusForm');
 const paymentStatusSelect = document.getElementById('paymentStatusSelect');
-const outcomeForm = document.getElementById('outcomeForm');
 const outcomeSelect = document.getElementById('outcomeSelect');
+const customerList = document.getElementById('customerList');
+const deviceList = document.getElementById('deviceList');
 
 async function fetchJson(url, options = {}) {
     const response = await fetch(url, {
@@ -63,6 +65,121 @@ async function loadCustomers() {
     const customers = await fetchJson('/api/customers');
     state.customers = customers;
     populateCustomerSelects();
+    renderInventory();
+}
+
+async function loadDevices() {
+    state.devices = await fetchJson('/api/devices');
+    renderInventory();
+}
+
+function renderInventory() {
+    document.getElementById('customerCount').textContent = state.customers.length;
+    document.getElementById('deviceCount').textContent = state.devices.length;
+
+    customerList.innerHTML = state.customers.length
+        ? state.customers.map(customer => `
+            <div class="inventory-item">
+                <div>
+                    <strong>${customer.fullName}</strong>
+                    <span>${customer.phoneNumber}</span>
+                </div>
+                <div class="inventory-actions">
+                    <span class="badge">Customer #${customer.id}</span>
+                    <button type="button" class="secondary-button" data-action="edit-customer" data-id="${customer.id}">Edit</button>
+                    <button type="button" class="danger-button" data-action="delete-customer" data-id="${customer.id}">Delete</button>
+                </div>
+            </div>
+        `).join('')
+        : '<div class="empty-state">No customers created yet.</div>';
+
+    deviceList.innerHTML = state.devices.length
+        ? state.devices.map(device => {
+            const customer = state.customers.find(item => item.id === device.customerId);
+            return `
+                <div class="inventory-item">
+                    <div>
+                        <strong>${device.brand} ${device.model}</strong>
+                        <span>${device.deviceType} · ${customer ? customer.fullName : 'Unknown customer'}</span>
+                    </div>
+                    <div class="inventory-actions">
+                        <span class="badge">Device #${device.id}</span>
+                        <button type="button" class="secondary-button" data-action="edit-device" data-id="${device.id}">Edit</button>
+                        <button type="button" class="danger-button" data-action="delete-device" data-id="${device.id}">Delete</button>
+                    </div>
+                </div>
+            `;
+        }).join('')
+        : '<div class="empty-state">No devices registered yet.</div>';
+}
+
+async function editCustomer(id) {
+    const customer = state.customers.find(item => item.id === id);
+    if (!customer) return;
+    const fullName = window.prompt('Customer full name:', customer.fullName);
+    if (fullName === null) return;
+    const phoneNumber = window.prompt('Customer phone number:', customer.phoneNumber);
+    if (phoneNumber === null) return;
+
+    await fetchJson(`/api/customers/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ fullName, phoneNumber })
+    });
+    await loadCustomers();
+    await loadJobs();
+}
+
+async function editDevice(id) {
+    const device = state.devices.find(item => item.id === id);
+    if (!device) return;
+    const customerId = window.prompt('Customer ID:', String(device.customerId));
+    if (customerId === null) return;
+    const deviceType = window.prompt('Device type:', device.deviceType);
+    if (deviceType === null) return;
+    const brand = window.prompt('Brand:', device.brand);
+    if (brand === null) return;
+    const model = window.prompt('Model:', device.model);
+    if (model === null) return;
+
+    await fetchJson(`/api/devices/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+            customerId: Number(customerId),
+            deviceType,
+            brand,
+            model
+        })
+    });
+    await loadDevices();
+    await loadJobs();
+}
+
+async function deleteInventoryItem(type, id) {
+    const label = type === 'customer' ? 'customer' : 'device';
+    if (!window.confirm(`Delete this ${label}? This cannot be undone.`)) return;
+    await fetchJson(`/api/${type}s/${id}`, { method: 'DELETE' });
+    await loadCustomers();
+    await loadDevices();
+    await loadJobs();
+}
+
+async function handleInventoryAction(event) {
+    const button = event.target.closest('button[data-action]');
+    if (!button) return;
+    const id = Number(button.dataset.id);
+    try {
+        if (button.dataset.action === 'edit-customer') {
+            await editCustomer(id);
+        } else if (button.dataset.action === 'edit-device') {
+            await editDevice(id);
+        } else if (button.dataset.action === 'delete-customer') {
+            await deleteInventoryItem('customer', id);
+        } else if (button.dataset.action === 'delete-device') {
+            await deleteInventoryItem('device', id);
+        }
+    } catch (error) {
+        alert(error.message);
+    }
 }
 
 function populateCustomerSelects() {
@@ -157,8 +274,7 @@ function renderJobs(jobs) {
 }
 
 function getDeviceById(deviceId) {
-    const allDevices = JSON.parse(sessionStorage.getItem('devices') || '[]');
-    return allDevices.find(device => device.id === Number(deviceId)) || null;
+    return state.devices.find(device => device.id === Number(deviceId)) || null;
 }
 
 async function renderJobDetail(jobId) {
@@ -179,12 +295,12 @@ async function renderJobDetail(jobId) {
         paymentStatusSelect.value = job.paymentStatus;
 
         const statusLabels = {
+            IN_PROGRESS: 'Not completed (In progress)',
             READY_FOR_COLLECTION: 'Ready for collection',
             COMPLETED: 'Completed'
         };
-        statusSelect.innerHTML = '<option value="" selected disabled>Update status</option>' +
+        statusSelect.innerHTML = '<option value="" selected>Keep current status</option>' +
             allowedNextStatuses.map(status => `<option value="${status}">${statusLabels[status]}</option>`).join('');
-        document.getElementById('saveStatusButton').disabled = allowedNextStatuses.length === 0;
 
         const historyList = document.getElementById('historyList');
         if (!records.length) {
@@ -210,6 +326,7 @@ async function submitCustomerForm(event) {
         });
         customerForm.reset();
         await loadCustomers();
+        await loadDevices();
         await loadJobs();
     } catch (error) {
         alert(error.message);
@@ -230,10 +347,8 @@ async function submitDeviceForm(event) {
             })
         });
         deviceForm.reset();
-        const devices = JSON.parse(sessionStorage.getItem('devices') || '[]');
-        devices.push(device);
-        sessionStorage.setItem('devices', JSON.stringify(devices));
         await loadCustomers();
+        await loadDevices();
         await loadJobs();
     } catch (error) {
         alert(error.message);
@@ -263,7 +378,7 @@ async function submitJobForm(event) {
     }
 }
 
-async function handleStatusUpdate(event) {
+async function submitRepairUpdateForm(event) {
     event.preventDefault();
     if (!state.selectedJobId) {
         alert('Select a job first');
@@ -272,32 +387,18 @@ async function handleStatusUpdate(event) {
 
     try {
         const status = statusSelect.value;
-        await fetchJson(`/api/repair-jobs/${state.selectedJobId}/status`, {
-            method: 'PUT',
-            body: JSON.stringify({
-                status
-            })
-        });
-        await loadJobs();
-        await loadDashboard();
-    } catch (error) {
-        alert(error.message);
-    }
-}
-
-async function submitOutcomeForm(event) {
-    event.preventDefault();
-    if (!state.selectedJobId) {
-        alert('Select a job first');
-        return;
-    }
-
-    try {
+        if (status) {
+            await fetchJson(`/api/repair-jobs/${state.selectedJobId}/status`, {
+                method: 'PUT',
+                body: JSON.stringify({ status })
+            });
+        }
         await fetchJson(`/api/repair-jobs/${state.selectedJobId}/outcome`, {
             method: 'PUT',
             body: JSON.stringify({ repairOutcome: outcomeSelect.value })
         });
         await loadJobs();
+        await loadDashboard();
         await renderJobDetail(state.selectedJobId);
     } catch (error) {
         alert(error.message);
@@ -336,9 +437,10 @@ searchInput.addEventListener('input', async (event) => {
 customerForm.addEventListener('submit', submitCustomerForm);
 deviceForm.addEventListener('submit', submitDeviceForm);
 jobForm.addEventListener('submit', submitJobForm);
-statusForm.addEventListener('submit', handleStatusUpdate);
+repairUpdateForm.addEventListener('submit', submitRepairUpdateForm);
 paymentStatusForm.addEventListener('submit', submitPaymentStatusForm);
-outcomeForm.addEventListener('submit', submitOutcomeForm);
+customerList.addEventListener('click', handleInventoryAction);
+deviceList.addEventListener('click', handleInventoryAction);
 
 document.getElementById('jobCustomerSelect').addEventListener('change', async (event) => {
     const customerId = event.target.value;
@@ -380,8 +482,8 @@ async function boot() {
     try {
         const customers = await fetchJson('/api/customers');
         state.customers = customers;
-        const deviceData = await fetchJson('/api/devices');
-        sessionStorage.setItem('devices', JSON.stringify(deviceData));
+        state.devices = await fetchJson('/api/devices');
+        renderInventory();
         populateCustomerSelects();
         const jobData = await fetchJson('/api/repair-jobs');
         state.jobs = jobData;

@@ -10,6 +10,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RepairJobRepository {
+    public boolean existsByCustomerId(int customerId) throws SQLException {
+        return existsForColumn("customer_id", customerId);
+    }
+
+    public boolean existsByDeviceId(int deviceId) throws SQLException {
+        return existsForColumn("device_id", deviceId);
+    }
+
+    private boolean existsForColumn(String column, int value) throws SQLException {
+        String sql = "SELECT 1 FROM repair_jobs WHERE " + column + " = ? LIMIT 1";
+        try (Connection connection = DatabaseConfig.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, value);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
     public RepairJob save(RepairJob repairJob) throws SQLException {
         String sql = "INSERT INTO repair_jobs (customer_id, device_id, reported_fault, repair_notes, repair_cost, payment_status, repair_outcome, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = DatabaseConfig.getConnection();

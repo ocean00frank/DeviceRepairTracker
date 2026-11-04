@@ -48,6 +48,30 @@ public class ApiController {
             }
         });
 
+        app.put("/api/customers/{id}", ctx -> {
+            try {
+                int id = Integer.parseInt(ctx.pathParam("id"));
+                CustomerRequest request = ctx.bodyAsClass(CustomerRequest.class);
+                Customer customer = manager.updateCustomer(id, request.fullName(), request.phoneNumber());
+                ctx.json(customer);
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).json(errorResponse("Invalid customer input", e.getMessage()));
+            } catch (SQLException e) {
+                ctx.status(500).json(errorResponse("Database error", "Unable to update customer"));
+            }
+        });
+
+        app.delete("/api/customers/{id}", ctx -> {
+            try {
+                manager.deleteCustomer(Integer.parseInt(ctx.pathParam("id")));
+                ctx.status(204);
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).json(errorResponse("Unable to delete customer", e.getMessage()));
+            } catch (SQLException e) {
+                ctx.status(500).json(errorResponse("Database error", "Unable to delete customer"));
+            }
+        });
+
         app.get("/api/devices", ctx -> {
             try {
                 List<Device> devices = manager.getAllDevices();
@@ -66,6 +90,30 @@ public class ApiController {
                 ctx.status(400).json(errorResponse("Invalid device input", e.getMessage()));
             } catch (SQLException e) {
                 ctx.status(500).json(errorResponse("Database error", "Unable to save device"));
+            }
+        });
+
+        app.put("/api/devices/{id}", ctx -> {
+            try {
+                int id = Integer.parseInt(ctx.pathParam("id"));
+                DeviceRequest request = ctx.bodyAsClass(DeviceRequest.class);
+                Device device = manager.updateDevice(id, request.customerId(), request.deviceType(), request.brand(), request.model());
+                ctx.json(device);
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).json(errorResponse("Invalid device input", e.getMessage()));
+            } catch (SQLException e) {
+                ctx.status(500).json(errorResponse("Database error", "Unable to update device"));
+            }
+        });
+
+        app.delete("/api/devices/{id}", ctx -> {
+            try {
+                manager.deleteDevice(Integer.parseInt(ctx.pathParam("id")));
+                ctx.status(204);
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).json(errorResponse("Unable to delete device", e.getMessage()));
+            } catch (SQLException e) {
+                ctx.status(500).json(errorResponse("Database error", "Unable to delete device"));
             }
         });
 

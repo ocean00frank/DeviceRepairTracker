@@ -105,8 +105,67 @@ h1, h2, h3, p {
     margin-bottom: 20px;
 }
 
+.inventory-grid {
+    margin-bottom: 20px;
+}
+
 .panel {
     padding: 20px;
+}
+
+.inventory-list {
+    display: grid;
+    gap: 10px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.inventory-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.inventory-item strong,
+.inventory-item span {
+    display: block;
+}
+
+.inventory-item span {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-top: 4px;
+}
+
+.inventory-item .badge {
+    margin: 0;
+    white-space: nowrap;
+}
+
+.inventory-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.inventory-actions button {
+    padding: 6px 9px;
+    font-size: 0.8rem;
+}
+
+.secondary-button {
+    background: #475569;
+}
+
+.danger-button {
+    background: var(--danger);
 }
 
 .stack-form,

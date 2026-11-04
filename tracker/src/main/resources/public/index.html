@@ -72,6 +72,34 @@
                 </article>
             </section>
 
+            <section class="panel-grid inventory-grid">
+                <article class="panel">
+                    <div class="section-header">
+                        <div>
+                            <h2>Customers created</h2>
+                            <p class="form-hint">Customers currently saved in the system.</p>
+                        </div>
+                        <strong id="customerCount">0</strong>
+                    </div>
+                    <div id="customerList" class="inventory-list">
+                        <div class="empty-state">No customers created yet.</div>
+                    </div>
+                </article>
+
+                <article class="panel">
+                    <div class="section-header">
+                        <div>
+                            <h2>Registered devices</h2>
+                            <p class="form-hint">Devices linked to their customers.</p>
+                        </div>
+                        <strong id="deviceCount">0</strong>
+                    </div>
+                    <div id="deviceList" class="inventory-list">
+                        <div class="empty-state">No devices registered yet.</div>
+                    </div>
+                </article>
+            </section>
+
             <section class="panel">
                 <h2>Create repair job</h2>
                 <form id="jobForm" class="job-form">
@@ -152,12 +180,11 @@
                         </div>
                     </div>
 
-                    <form id="statusForm" class="status-form">
-                        <select id="statusSelect" name="status" aria-label="Update status" required></select>
-                        <button id="saveStatusButton" type="submit">Save status</button>
-                    </form>
-
-                    <form id="outcomeForm" class="status-form">
+                    <form id="repairUpdateForm" class="status-form">
+                        <label>
+                            Update status
+                            <select id="statusSelect" name="status" aria-label="Update status"></select>
+                        </label>
                         <label>
                             Was the device fixed?
                             <select id="outcomeSelect" name="repairOutcome">
@@ -166,7 +193,7 @@
                                 <option value="NOT_FIXED">Not fixed</option>
                             </select>
                         </label>
-                        <button id="saveOutcomeButton" type="submit">Save repair result</button>
+                        <button id="saveRepairUpdateButton" type="submit">Save changes</button>
                     </form>
 
                     <section class="finance-section" aria-labelledby="financeHeading">

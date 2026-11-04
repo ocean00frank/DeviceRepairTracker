@@ -55,4 +55,27 @@ public class CustomerRepository {
         }
         return null;
     }
+
+    public Customer update(Customer customer) throws SQLException {
+        String sql = "UPDATE customers SET full_name = ?, phone_number = ? WHERE id = ?";
+        try (Connection connection = DatabaseConfig.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, customer.getFullName());
+            statement.setString(2, customer.getPhoneNumber());
+            statement.setInt(3, customer.getId());
+            if (statement.executeUpdate() == 0) {
+                return null;
+            }
+        }
+        return customer;
+    }
+
+    public boolean deleteById(int id) throws SQLException {
+        String sql = "DELETE FROM customers WHERE id = ?";
+        try (Connection connection = DatabaseConfig.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            return statement.executeUpdate() > 0;
+        }
+    }
 }

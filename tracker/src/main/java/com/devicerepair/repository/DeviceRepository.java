@@ -86,4 +86,29 @@ public class DeviceRepository {
         }
         return devices;
     }
+
+    public Device update(Device device) throws SQLException {
+        String sql = "UPDATE devices SET customer_id = ?, device_type = ?, brand = ?, model = ? WHERE id = ?";
+        try (Connection connection = DatabaseConfig.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, device.getCustomerId());
+            statement.setString(2, device.getDeviceType());
+            statement.setString(3, device.getBrand());
+            statement.setString(4, device.getModel());
+            statement.setInt(5, device.getId());
+            if (statement.executeUpdate() == 0) {
+                return null;
+            }
+        }
+        return device;
+    }
+
+    public boolean deleteById(int id) throws SQLException {
+        String sql = "DELETE FROM devices WHERE id = ?";
+        try (Connection connection = DatabaseConfig.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            return statement.executeUpdate() > 0;
+        }
+    }
 }

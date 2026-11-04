@@ -182,16 +182,19 @@ public class RepairJob implements Trackable {
             return;
         }
 
-        // Repairs must move forward one step at a time; completed jobs cannot move further.
+        // Allow corrections when a repair was moved to the wrong status.
         boolean validTransition = switch (this.status) {
             case IN_PROGRESS -> nextStatus == RepairStatus.READY_FOR_COLLECTION;
-            case READY_FOR_COLLECTION -> nextStatus == RepairStatus.COMPLETED;
-            case COMPLETED -> false;
+            case READY_FOR_COLLECTION -> nextStatus == RepairStatus.IN_PROGRESS
+                    || nextStatus == RepairStatus.COMPLETED;
+            case COMPLETED -> nextStatus == RepairStatus.IN_PROGRESS
+                    || nextStatus == RepairStatus.READY_FOR_COLLECTION;
         };
 
         if (!validTransition) {
             throw new InvalidRepairStatusException(
-                    "Invalid status transition from " + this.status + " to " + nextStatus + ". Allowed transitions are: IN_PROGRESS -> READY_FOR_COLLECTION, READY_FOR_COLLECTION -> COMPLETED."
+                    "Invalid status transition from " + this.status + " to " + nextStatus
+                            + ". Completed repairs can be changed back to Ready for collection."
             );
         }
 

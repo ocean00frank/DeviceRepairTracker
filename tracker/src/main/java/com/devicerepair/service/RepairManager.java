@@ -77,6 +77,57 @@ public class RepairManager {
         return deviceRepository.findAll();
     }
 
+    public Customer updateCustomer(int id, String fullName, String phoneNumber) throws SQLException {
+        Customer customer = customerRepository.findById(id);
+        if (customer == null) {
+            throw new IllegalArgumentException("Customer not found");
+        }
+        customer.setFullName(fullName);
+        customer.setPhoneNumber(phoneNumber);
+        return customerRepository.update(customer);
+    }
+
+    public void deleteCustomer(int id) throws SQLException {
+        if (customerRepository.findById(id) == null) {
+            throw new IllegalArgumentException("Customer not found");
+        }
+        if (!deviceRepository.findByCustomerId(id).isEmpty()) {
+            throw new IllegalArgumentException("Cannot delete a customer with registered devices");
+        }
+        if (repairJobRepository.existsByCustomerId(id)) {
+            throw new IllegalArgumentException("Cannot delete a customer with repair jobs");
+        }
+        customerRepository.deleteById(id);
+    }
+
+    public Device updateDevice(int id, int customerId, String deviceType, String brand, String model) throws SQLException {
+        if (customerRepository.findById(customerId) == null) {
+            throw new IllegalArgumentException("Customer not found");
+        }
+        Device device = deviceRepository.findById(id);
+        if (device == null) {
+            throw new IllegalArgumentException("Device not found");
+        }
+        if (device.getCustomerId() != customerId && repairJobRepository.existsByDeviceId(id)) {
+            throw new IllegalArgumentException("Cannot change the customer for a device with repair jobs");
+        }
+        device.setCustomerId(customerId);
+        device.setDeviceType(deviceType);
+        device.setBrand(brand);
+        device.setModel(model);
+        return deviceRepository.update(device);
+    }
+
+    public void deleteDevice(int id) throws SQLException {
+        if (deviceRepository.findById(id) == null) {
+            throw new IllegalArgumentException("Device not found");
+        }
+        if (repairJobRepository.existsByDeviceId(id)) {
+            throw new IllegalArgumentException("Cannot delete a device with repair jobs");
+        }
+        deviceRepository.deleteById(id);
+    }
+
     public List<RepairJob> getAllRepairJobs() throws SQLException {
         return repairJobRepository.findAll();
     }
@@ -163,13 +214,16 @@ public class RepairManager {
 
         boolean validTransition = switch (previous) {
             case IN_PROGRESS -> newStatus == RepairStatus.READY_FOR_COLLECTION;
-            case READY_FOR_COLLECTION -> newStatus == RepairStatus.COMPLETED;
-            case COMPLETED -> false;
+            case READY_FOR_COLLECTION -> newStatus == RepairStatus.IN_PROGRESS
+                    || newStatus == RepairStatus.COMPLETED;
+            case COMPLETED -> newStatus == RepairStatus.IN_PROGRESS
+                    || newStatus == RepairStatus.READY_FOR_COLLECTION;
         };
 
         if (!validTransition) {
             throw new InvalidRepairStatusException(
-                    "Invalid status transition from " + previous + " to " + newStatus + ". Allowed transitions are: IN_PROGRESS -> READY_FOR_COLLECTION, READY_FOR_COLLECTION -> COMPLETED."
+                    "Invalid status transition from " + previous + " to " + newStatus
+                            + ". Completed repairs can be changed back to Ready for collection."
             );
         }
 
@@ -196,7 +250,11 @@ public class RepairManager {
         if (status == RepairStatus.IN_PROGRESS) {
             statuses.add(RepairStatus.READY_FOR_COLLECTION.name());
         } else if (status == RepairStatus.READY_FOR_COLLECTION) {
+            statuses.add(RepairStatus.IN_PROGRESS.name());
             statuses.add(RepairStatus.COMPLETED.name());
+        } else if (status == RepairStatus.COMPLETED) {
+            statuses.add(RepairStatus.IN_PROGRESS.name());
+            statuses.add(RepairStatus.READY_FOR_COLLECTION.name());
         }
         return statuses;
     }
