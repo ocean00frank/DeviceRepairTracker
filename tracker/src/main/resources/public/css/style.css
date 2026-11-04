@@ -460,6 +460,88 @@ tbody tr.selected {
     .detail-meta {
         gap: 10px;
     }
+
+    .table-wrap {
+        overflow: visible;
+    }
+
+    table {
+        display: block;
+        min-width: 0;
+    }
+
+    thead {
+        display: none;
+    }
+
+    tbody {
+        display: grid;
+        gap: 12px;
+    }
+
+    tbody tr {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+    }
+
+    tbody tr:hover {
+        background: #fff;
+    }
+
+    tbody tr.selected {
+        background: var(--primary-soft);
+    }
+
+    th,
+    td {
+        min-width: 0;
+        padding: 10px;
+        overflow-wrap: anywhere;
+    }
+
+    tbody td {
+        display: grid;
+        align-content: start;
+        gap: 4px;
+        border-bottom: 1px solid var(--line);
+        font-size: 0.9rem;
+    }
+
+    tbody td::before {
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    tbody td:nth-child(1)::before { content: "ID"; }
+    tbody td:nth-child(2)::before { content: "Customer"; }
+    tbody td:nth-child(3)::before { content: "Contact"; }
+    tbody td:nth-child(4)::before { content: "Device"; }
+    tbody td:nth-child(5)::before { content: "Fault"; }
+    tbody td:nth-child(6)::before { content: "Status"; }
+    tbody td:nth-child(7)::before { content: "Result"; }
+    tbody td:nth-child(8)::before { content: "Cost"; }
+    tbody td:nth-child(9)::before { content: "Payment"; }
+    tbody td:nth-child(10)::before { content: "Date received"; }
+
+    tbody td:nth-child(5),
+    tbody td:nth-child(10),
+    tbody td[colspan] {
+        grid-column: 1 / -1;
+    }
+
+    tbody td[colspan] {
+        display: block;
+    }
+
+    tbody td[colspan]::before {
+        content: none;
+    }
 }
 
 @media (max-width: 360px) {
