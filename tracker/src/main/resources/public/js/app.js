@@ -45,12 +45,18 @@ async function fetchJson(url, options = {}) {
     return data;
 }
 
+function setHealthStatus(message, isOnline) {
+    dashboardEls.healthStatus.textContent = message;
+    dashboardEls.healthStatus.classList.toggle('online', isOnline);
+    dashboardEls.healthStatus.classList.toggle('offline', !isOnline);
+}
+
 async function checkHealth() {
     try {
         const health = await fetchJson('/api/health');
-        dashboardEls.healthStatus.textContent = `DB: ${health.databaseName || 'connected'}`;
+        setHealthStatus(`DB: ${health.databaseName || 'connected'}`, true);
     } catch (error) {
-        dashboardEls.healthStatus.textContent = 'DB offline';
+        setHealthStatus('DB offline', false);
     }
 }
 

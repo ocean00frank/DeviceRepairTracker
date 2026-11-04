@@ -115,6 +115,39 @@ mvn exec:java "-Dexec.args=7001"
 5. **RepairManager:** Manages repair jobs and updates their status.
 6. **InvalidRepairStatusException:** Handles invalid repair-status changes.
 
+## Main classes and their functions
+
+### Application and business logic
+
+| Class | Function |
+|---|---|
+| `Main` | Initializes the database, configures the Javalin server and JSON handling, registers API routes, and serves the web interface. |
+| `ApiController` | Defines the REST API endpoints, validates incoming requests, calls the service layer, and returns JSON responses and appropriate HTTP status codes. |
+| `RepairManager` | Applies business rules and coordinates customer, device, repair-job, history, and payment operations with the repositories. |
+| `DatabaseConfig` | Reads database settings from environment variables or `.env`, creates PostgreSQL connections, and initializes the schema. |
+
+### Model classes
+
+| Class | Function |
+|---|---|
+| `Customer` | Holds a customer's ID, name, and phone number, and validates the contact details. |
+| `Device` | Holds a device's type, brand, model, and the ID of its owner. |
+| `RepairJob` | Holds repair details, cost, outcome, and payment and repair statuses; validates status changes and keeps an in-memory status history. |
+| `Payment` | Represents a payment for a repair job, including amount, payment method, status, and date; validates payment information. |
+| `RepairStatus` | Lists the allowed repair progress states and converts status text to a valid state. |
+| `Trackable` | Defines the `trackStatus()` method used by objects that provide a status summary. `RepairJob` and `Payment` implement it. |
+
+### Database and error-handling classes
+
+| Class | Function |
+|---|---|
+| `CustomerRepository` | Saves, finds, updates, and deletes customer records in PostgreSQL. |
+| `DeviceRepository` | Saves, finds, updates, and deletes devices, including looking up devices by customer. |
+| `RepairJobRepository` | Stores and retrieves repair jobs, searches and counts jobs, and updates repair details and statuses. |
+| `PaymentRepository` | Records payments, updates repair costs, and calculates totals and balances for a repair job. |
+| `RepairHistoryRepository` | Retrieves the recorded status-change history for a repair job. |
+| `InvalidRepairStatusException` | Reports an attempted repair-status change that is not allowed. |
+
 ## Object-oriented concepts demonstrated
 
 - **Encapsulation:** model fields are private and validated through methods.
