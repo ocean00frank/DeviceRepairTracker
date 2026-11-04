@@ -1,10 +1,37 @@
 # Device Repair Tracker
 
-## Problem
+Device Repair Tracker is a Java web application for managing repair-shop
+operations. It stores customers and their devices, creates repair jobs, tracks
+repair progress and outcomes, and records payment information in PostgreSQL.
+The system provides a browser dashboard backed by a Javalin REST API.
 
-Repair shops need a simple way to record customers and their devices, create repair jobs, track repair progress, record whether a device was fixed, and monitor payment status.
+## Team
 
-Device Repair Tracker is a Java web application that solves this problem with a Javalin REST API, a browser frontend, and PostgreSQL permanent storage.
+| Name | Student number |
+|---|---:|
+| Jean Kapalu | 2410497 |
+| Faith Sikombwa | 2410056 |
+| Muzhinga Chibanda | 2410151 |
+| Abraham Lubosi | 2410265 |
+| Frank Mwelwa | 2410434 |
+
+## Main features
+
+- Register, update, list, and delete customers and devices.
+- Create and search repair jobs.
+- Track repair status, repair outcome, and repair history.
+- Record repair costs, payments, and outstanding balances.
+- View dashboard statistics for jobs and repair progress.
+- Use a responsive browser interface connected to REST endpoints.
+
+## Technology
+
+- Java 17
+- Javalin REST API
+- PostgreSQL
+- Maven
+- HTML, CSS, and JavaScript frontend
+- JUnit 5 tests
 
 ## Requirements
 
@@ -15,26 +42,26 @@ Device Repair Tracker is a Java web application that solves this problem with a 
 
 ## How to run
 
-1. Clone the group's GitHub repository:
+1. Clone the repository and move into the application directory:
 
    ```powershell
    git clone <repository-url>
    cd <repository-folder>\tracker
    ```
 
-2. Create the database in PostgreSQL:
+2. Create the PostgreSQL database:
 
    ```sql
    CREATE DATABASE "DeviceRepair_db";
    ```
 
-3. Create the local environment file:
+3. Create and configure the local environment file:
 
    ```powershell
    Copy-Item .env.example .env
    ```
 
-4. Edit `.env` with the PostgreSQL credentials for your computer:
+   Update `.env` with the PostgreSQL credentials for the local computer:
 
    ```env
    DB_HOST=localhost
@@ -44,84 +71,54 @@ Device Repair Tracker is a Java web application that solves this problem with a 
    DB_PASSWORD=your_postgresql_password
    ```
 
-   Do not commit `.env` because it contains local credentials.
+   Do not commit `.env`; it contains local database credentials.
 
-5. Build and test the project:
+4. Build and test the application:
 
    ```powershell
    mvn clean test
    ```
 
-6. Start the application:
+5. Start the application:
 
    ```powershell
    mvn exec:java
    ```
 
-7. Open <http://localhost:7000/> in a browser. The API health check is available at <http://localhost:7000/api/health>.
+6. Open <http://localhost:7000/> in a browser. The API health check is
+   available at <http://localhost:7000/api/health>.
 
-To use another port:
+To use a different port:
 
 ```powershell
 mvn exec:java "-Dexec.args=7001"
 ```
 
-## Main classes
+## Project structure
 
-### Application and API
+- `src/main/java/com/devicerepair/Main.java` starts the Javalin server.
+- `src/main/java/com/devicerepair/api` contains REST API routes.
+- `src/main/java/com/devicerepair/model` contains customers, devices, repair
+  jobs, payments, and repair statuses.
+- `src/main/java/com/devicerepair/service` contains business logic.
+- `src/main/java/com/devicerepair/repository` handles database operations.
+- `src/main/resources/public` contains the browser interface.
+- `database/schema.sql` defines the PostgreSQL tables and indexes.
+- `src/test` contains automated tests.
 
-- `Main` - starts Javalin, configures JSON and serves the frontend.
-- `ApiController` - defines the REST API endpoints and handles HTTP errors.
-- `DatabaseConfig` - loads database settings and initializes the schema.
-- `RepairManager` - coordinates business rules and repository operations.
+## Object-oriented concepts demonstrated
 
-### Model classes
+- **Encapsulation:** model fields are private and validated through methods.
+- **Interface and polymorphism:** trackable objects implement `Trackable` and
+  provide their own status-tracking behavior.
+- **Custom exceptions:** invalid repair-status transitions raise
+  `InvalidRepairStatusException`.
+- **Collections:** the application uses Java collections such as `List`,
+  `ArrayList`, and `HashMap`.
 
-- `Customer` - stores and validates customer details.
-- `Device` - stores and validates device details.
-- `RepairJob` - stores repair details and controls valid status transitions.
-- `RepairStatus` - defines the available repair statuses.
-- `Payment` - stores and validates payment transactions.
-- `Trackable` - interface shared by trackable application objects.
+## Repository collaboration
 
-### Repository classes
-
-- `CustomerRepository` - saves and retrieves customers.
-- `DeviceRepository` - saves and retrieves devices.
-- `RepairJobRepository` - saves and retrieves repair jobs.
-- `RepairHistoryRepository` - stores and retrieves status history.
-- `PaymentRepository` - stores payments and calculates balances.
-
-### Exception class
-
-- `InvalidRepairStatusException` - reports invalid repair-status transitions.
-
-## Object-oriented requirements demonstrated
-
-- **Encapsulation:** model fields are private and accessed through validated methods.
-- **Interface:** `RepairJob` and `Payment` implement `Trackable`.
-- **Polymorphism:** both classes provide their own `trackStatus()` implementation.
-- **Custom exception:** invalid repair transitions throw `InvalidRepairStatusException`.
-- **Collections:** the application uses `List`, `ArrayList`, and `HashMap`.
-
-## Frontend and storage
-
-The frontend is in `src/main/resources/public`:
-
-- `index.html` - page structure and forms.
-- `css/style.css` - page styling.
-- `js/app.js` - browser interactions and REST API calls.
-
-PostgreSQL provides permanent storage for customers, devices, repair jobs, repair history, and payments. The database schema is in `database/schema.sql`.
-
-## Group repository and commit history
-
-The group uses one shared GitHub repository. Every group member must:
-
-1. Commit the code they worked on from their own GitHub account.
-2. Use a clear commit message describing the work.
-3. Push their commits to the shared repository.
-
-The GitHub commit history records which member contributed each change.
-
-Keepthis
+The team uses one shared GitHub repository. Each member should commit the work
+completed from their own GitHub account, use descriptive commit messages, and
+push changes to the shared repository so contributions remain visible in the
+commit history.
