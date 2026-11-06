@@ -1,6 +1,7 @@
 package com.devicerepair.model;
 
 // Stores a device and the customer who owns it.
+// Stores a device and its customer relationship.
 public class Device {
     private int id;
     private int customerId;

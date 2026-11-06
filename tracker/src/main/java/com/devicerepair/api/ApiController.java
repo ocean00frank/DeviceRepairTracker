@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+// Defines HTTP endpoints for repair shop operations.
 public class ApiController {
     public void registerRoutes(Javalin app, RepairManager manager) {
         app.get("/api/health", ctx -> {

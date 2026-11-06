@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+// Persists status history for repair jobs.
 public class RepairHistoryRepository {
     public List<Map<String, Object>> findByRepairJobId(int repairJobId) throws SQLException {
         List<Map<String, Object>> history = new ArrayList<>();

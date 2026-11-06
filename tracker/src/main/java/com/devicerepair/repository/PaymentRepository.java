@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+// Persists payments and calculates repair finances.
 public class PaymentRepository {
     public BigDecimal setRepairCost(int repairJobId, BigDecimal repairCost) throws SQLException {
         requireRepairJobId(repairJobId);

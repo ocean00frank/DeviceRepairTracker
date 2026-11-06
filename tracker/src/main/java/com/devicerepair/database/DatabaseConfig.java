@@ -10,6 +10,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+// Provides database connection settings and connections.
 public final class DatabaseConfig {
     private static final String DEFAULT_HOST = "localhost";
     private static final String DEFAULT_PORT = "5432";

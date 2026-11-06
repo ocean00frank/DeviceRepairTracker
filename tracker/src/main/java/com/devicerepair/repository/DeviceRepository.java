@@ -7,6 +7,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+// Persists and retrieves registered devices.
 public class DeviceRepository {
     public Device save(Device device) throws SQLException {
         String sql = "INSERT INTO devices (customer_id, device_type, brand, model) VALUES (?, ?, ?, ?)";

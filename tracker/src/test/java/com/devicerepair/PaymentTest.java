@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+// Tests payment validation and tracking behavior.
 class PaymentTest {
 
     @Test

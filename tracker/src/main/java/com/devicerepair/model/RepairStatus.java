@@ -1,5 +1,6 @@
 package com.devicerepair.model;
 
+// Lists the stages a repair job can have.
 public enum RepairStatus {
     IN_PROGRESS,
     READY_FOR_COLLECTION,

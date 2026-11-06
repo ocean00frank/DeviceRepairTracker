@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 // Records one payment received for a repair job.
+// Stores payment details for a repair job.
 public class Payment implements Trackable {
     private int id;
     private int repairJobId;

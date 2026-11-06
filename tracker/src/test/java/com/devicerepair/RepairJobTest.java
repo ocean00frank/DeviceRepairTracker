@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+// Tests repair job validation and status transitions.
 class RepairJobTest {
 
     @Test

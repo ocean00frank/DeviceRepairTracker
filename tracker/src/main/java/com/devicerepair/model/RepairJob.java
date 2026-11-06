@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 // Holds repair details and controls valid progress from intake to completion.
+// Represents a repair request and its progress history.
 public class RepairJob implements Trackable {
     private int id;
     private int customerId;

@@ -9,6 +9,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.javalin.Javalin;
 import io.javalin.json.JavalinJackson;
 
+// Starts the repair tracker server and loads the web application.
 public class Main {
     public static void main(String[] args) {
         DatabaseConfig.initializeDatabase();

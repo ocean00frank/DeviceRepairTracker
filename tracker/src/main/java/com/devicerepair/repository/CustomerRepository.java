@@ -7,6 +7,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+// Persists and retrieves customer records.
 public class CustomerRepository {
     public Customer save(Customer customer) throws SQLException {
         String sql = "INSERT INTO customers (full_name, phone_number) VALUES (?, ?)";

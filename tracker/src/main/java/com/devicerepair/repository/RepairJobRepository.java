@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+// Persists repair jobs and their status updates.
 public class RepairJobRepository {
     public boolean existsByCustomerId(int customerId) throws SQLException {
         return existsForColumn("customer_id", customerId);
